@@ -1,29 +1,55 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
+import './AdminProfile.css';
 
 const Profile = () => {
-  const url='https://projectx-backend-q4wb.onrender.com';
-  const [profile, setProfile] = useState(null);
-
-  const [imagePreview, setImagePreview] = useState(null);
+  const [profile, setProfile] = useState({
+    fullname: '',
+    email: '',
+    phone: '',
+    aadharno: '',
+    image: '',
+  });
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [passwords, setPasswords] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${url}/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await api.get('/profile');
+      setProfile({
+        fullname: response.data.fullname,
+        email: response.data.email,
+        phone: response.data.phone,
+        aadharno: response.data.aadharno,
+        image: response.data.image || '',
       });
-      setProfile(response.data);
       if (response.data.image) {
-        setImagePreview(`${url}/uploads/${response.data.image}`);
+        setImagePreview(`${api.defaults.baseURL}/uploads/${response.data.image}`);
       }
     } catch (error) {
+      setError('Failed to load profile');
       console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleProfileChange = (e) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
   const handleImageChange = (e) => {
@@ -34,26 +60,57 @@ const Profile = () => {
     }
   };
 
-  const handleImageUpload = async () => {
-    if (!imageFile) return;
+  const handlePasswordChange = (e) => {
+    setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const data = new FormData();
-      data.append('image', imageFile);
-      await axios.put(`${url}/user/profile`, data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
+      data.append('fullname', profile.fullname);
+      data.append('email', profile.email);
+      data.append('phone', profile.phone);
+      data.append('aadharno', profile.aadharno);
+      if (imageFile) data.append('image', imageFile);
+      await api.put('/user/profile', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      fetchProfile();
+      setSuccess('Profile updated successfully');
+      setError('');
+      setShowEditProfile(false);
       setImageFile(null);
+      fetchProfile();
     } catch (error) {
-      alert('Failed to upload image');
+      setError('Failed to update profile');
+      setSuccess('');
+      console.error('Error updating profile:', error);
     }
   };
 
-  if (!profile) {
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    try {
+      await api.put('/user/change-password', {
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword
+      });
+      setSuccess('Password changed successfully');
+      setError('');
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowChangePassword(false);
+    } catch (error) {
+      setError('Failed to change password');
+      setSuccess('');
+      console.error('Error changing password:', error);
+    }
+  };
+
+  if (loading) {
     return (
       <div style={{
         display: 'flex',
@@ -68,70 +125,159 @@ const Profile = () => {
     );
   }
 
-  // Modern stylish card look
   return (
-    <div style={{
-      maxWidth: 400,
-      margin: '2rem auto',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      borderRadius: 18,
-      boxShadow: '0 6px 24px rgba(102,126,234,0.15)',
-      padding: '2.5rem 2rem 2rem 2rem',
-      color: '#fff',
-      position: 'relative',
-      overflow: 'hidden',
-      textAlign: 'center',
-      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-    }}>
-      <div style={{
-        width: 90,
-        height: 90,
-        borderRadius: '50%',
-        background: 'rgba(255,255,255,0.15)',
-        margin: '0 auto 1.5rem auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        overflow: 'hidden',
-      }}>
+    <div className="profile-card">
+      <div className="profile-avatar">
         {imagePreview ? (
-          <img src={imagePreview} alt="Profile" style={{ width: 90, height: 90, borderRadius: '50%', objectFit: 'cover' }} />
+          <img src={imagePreview} alt="Profile" />
         ) : (
-          <span style={{
-            fontSize: 48,
-            fontWeight: 700,
-            color: '#fff',
-            letterSpacing: 2
-          }}>{profile.fullname?.[0]?.toUpperCase() || 'A'}</span>
+          <span>{profile.fullname?.[0]?.toUpperCase() || 'A'}</span>
         )}
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          style={{ marginTop: 8 }}
-        />
-        {imageFile && (
-          <button onClick={handleImageUpload} style={{ marginLeft: 8, padding: '0.3rem 1rem', borderRadius: 6, border: 'none', background: '#fff', color: '#764ba2', fontWeight: 600, cursor: 'pointer' }}>Upload</button>
-        )}
-      </div>
-      <h2 style={{ fontWeight: 700, fontSize: '1.6rem', marginBottom: 8 }}>{profile.fullname}</h2>
-      <div style={{ fontSize: '1.1rem', marginBottom: 16, opacity: 0.92 }}>{profile.username}</div>
-      <div style={{
-        background: 'rgba(255,255,255,0.10)',
-        borderRadius: 10,
-        padding: '1rem',
-        marginBottom: 10,
-        textAlign: 'left',
-        color: '#f3f3f3',
-        fontSize: '1rem'
-      }}>
-        <div style={{ marginBottom: 8 }}><strong>Email:</strong> {profile.email}</div>
-        <div style={{ marginBottom: 8 }}><strong>Phone:</strong> {profile.phone}</div>
+
+      <h2 className="profile-name">{profile.fullname}</h2>
+      <div className="profile-username">{profile.username}</div>
+
+      <div className="profile-info">
+        <div><strong>Email:</strong> {profile.email}</div>
+        <div><strong>Phone:</strong> {profile.phone}</div>
         <div><strong>Aadhar Number:</strong> {profile.aadharno}</div>
       </div>
+
+      <div className="profile-actions">
+        <button
+          className="edit-btn"
+          onClick={() => setShowEditProfile(!showEditProfile)}
+        >
+          {showEditProfile ? 'Cancel Edit' : 'Edit Profile'}
+        </button>
+        <button
+          className="password-btn"
+          onClick={() => setShowChangePassword(!showChangePassword)}
+        >
+          {showChangePassword ? 'Cancel Change' : 'Change Password'}
+        </button>
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
+      {showEditProfile && (
+        <form onSubmit={handleProfileSubmit} className="edit-form">
+          <h3 className="form-title">Edit Profile</h3>
+
+          <div className="form-group">
+            <label className="form-label">Profile Image:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="form-input"
+            />
+            {imagePreview && (
+              <img src={imagePreview} alt="Preview" className="image-preview" />
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Full Name:</label>
+            <input
+              type="text"
+              name="fullname"
+              value={profile.fullname}
+              onChange={handleProfileChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email:</label>
+            <input
+              type="email"
+              name="email"
+              value={profile.email}
+              onChange={handleProfileChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Phone:</label>
+            <input
+              type="tel"
+              name="phone"
+              value={profile.phone}
+              onChange={handleProfileChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Aadhar Number:</label>
+            <input
+              type="text"
+              name="aadharno"
+              value={profile.aadharno}
+              onChange={handleProfileChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <button type="submit" className="submit-btn">
+            Update Profile
+          </button>
+        </form>
+      )}
+
+      {showChangePassword && (
+        <form onSubmit={handlePasswordSubmit} className="password-form">
+          <h3 className="form-title">Change Password</h3>
+
+          <div className="form-group">
+            <label className="form-label">Current Password:</label>
+            <input
+              type="password"
+              name="currentPassword"
+              value={passwords.currentPassword}
+              onChange={handlePasswordChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">New Password:</label>
+            <input
+              type="password"
+              name="newPassword"
+              value={passwords.newPassword}
+              onChange={handlePasswordChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Confirm New Password:</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={passwords.confirmPassword}
+              onChange={handlePasswordChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <button type="submit" className="submit-btn">
+            Change Password
+          </button>
+        </form>
+      )}
     </div>
   );
 };

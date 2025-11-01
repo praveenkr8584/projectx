@@ -1,0 +1,169 @@
+.profile-card {
+  max-width: 500px;
+  margin: 2rem auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(102,126,234,0.15);
+  padding: 2.5rem 2rem 2rem 2rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-name {
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.profile-username {
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  opacity: 0.92;
+}
+
+.profile-info {
+  background: rgba(255,255,255,0.10);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 20px;
+  text-align: left;
+  color: #f3f3f3;
+  font-size: 1rem;
+}
+
+.profile-info div {
+  margin-bottom: 8px;
+}
+
+.profile-info div:last-child {
+  margin-bottom: 0;
+}
+
+.profile-actions {
+  margin-bottom: 20px;
+}
+
+.edit-btn, .password-btn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.3s;
+}
+
+.edit-btn:hover, .password-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.error-message {
+  background: rgba(255,0,0,0.2);
+  color: #ffcccc;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  background: rgba(0,255,0,0.2);
+  color: #ccffcc;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.edit-form, .password-form {
+  text-align: left;
+}
+
+.form-title {
+  color: #fff;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group:last-child {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+  color: #f3f3f3;
+  font-size: 0.9rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+}
+
+.image-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-top: 8px;
+  border: 2px solid rgba(255,255,255,0.5);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: none;
+  background: #fff;
+  color: #764ba2;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background: #f0f0f0;
+}
+
+.loading-text {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  font-size: 1.2rem;
+  color: #888;
+}
