@@ -313,6 +313,8 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Users filters removed — listings live on dedicated admin pages */}
+
       {/* Reports Section */}
       <div className="reports-section" style={{ marginBottom: '20px' }}>
         <h3>Analytics & Reports</h3>
@@ -419,79 +421,10 @@ const AdminDashboard = () => {
 
 
 
-      <h3>Services</h3>
-      <button className="add-new-btn" onClick={() => navigate('/admin/add-service')}>Add New Service</button>
-      {selectedItems.services.length > 0 && <button onClick={() => handleBulkDelete('services')} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}>Delete Selected ({selectedItems.services.length})</button>}
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={() => handleExport('services', 'csv')} className="export-btn">Export CSV</button>
-        <button onClick={() => handleExport('services', 'json')} className="export-btn">Export JSON</button>
-        <input type="file" accept=".csv,.json" onChange={(e) => handleImport('services', e.target.files[0])} className="import-input" />
-        <input
-          type="text"
-          placeholder="Filter by service name..."
-          value={filters.services.text}
-          onChange={(e) => handleFilterChange('services', 'text', e.target.value)}
-          style={{ marginRight: '10px', padding: '5px' }}
-        />
-        <input
-          type="number"
-          placeholder="Min Price"
-          value={filters.services.priceMin}
-          onChange={(e) => handleFilterChange('services', 'priceMin', e.target.value)}
-          style={{ marginRight: '10px', padding: '5px' }}
-        />
-        <input
-          type="number"
-          placeholder="Max Price"
-          value={filters.services.priceMax}
-          onChange={(e) => handleFilterChange('services', 'priceMax', e.target.value)}
-          style={{ padding: '5px' }}
-        />
-      </div>
-      <DataTable
-        data={filteredData.services}
-        type="services"
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        selectedItems={selectedItems.services}
-        onSelectItem={handleSelectItem}
-        onSelectAll={handleSelectAll}
-      />
-      <h3>Users</h3>
-      <button className="add-new-btn" onClick={() => navigate('/admin/register')}>Add New User</button>
-      {selectedItems.users.length > 0 && <button onClick={() => handleBulkDelete('users')} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}>Delete Selected ({selectedItems.users.length})</button>}
-      <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-        <button onClick={() => handleExport('users', 'csv')} className="export-btn">Export CSV</button>
-        <button onClick={() => handleExport('users', 'json')} className="export-btn">Export JSON</button>
-        <input type="file" accept=".csv,.json" onChange={(e) => handleImport('users', e.target.files[0])} className="import-input" />
-        <input
-          type="text"
-          placeholder="Filter by username or email..."
-          value={filters.users.text}
-          onChange={(e) => handleFilterChange('users', 'text', e.target.value)}
-          style={{ padding: '5px', minWidth: '180px' }}
-        />
-        <select value={filters.users.role} onChange={(e) => handleFilterChange('users', 'role', e.target.value)} style={{ padding: '5px' }}>
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="customer">Customer</option>
-        </select>
-        <select value={filters.users.status} onChange={(e) => handleFilterChange('users', 'status', e.target.value)} style={{ padding: '5px' }}>
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <button type="button" onClick={() => setFilters(prev => ({ ...prev, users: { text: '', role: '', status: '' } }))} style={{ padding: '5px 10px', background: '#eee', border: '1px solid #ccc', borderRadius: '4px' }}>Reset</button>
-      </div>
-      <DataTable
-        data={filteredData.users}
-        type="users"
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        selectedItems={selectedItems.users}
-        onSelectItem={handleSelectItem}
-        onSelectAll={handleSelectAll}
-      />
+      {/* Services, Users and listing controls moved to their dedicated admin pages:
+          - Services -> /admin/add-service
+          - Users -> /admin/register
+          This keeps the dashboard focused on stats, charts and reports. */}
     </div>
   );
 };

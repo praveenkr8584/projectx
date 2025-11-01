@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import DataTable from '../common/DataTable';
+import FilterPanel from '../common/FilterPanel';
 import EditForm from '../admin/EditForm';
 import { useNavigate } from 'react-router-dom';
 
@@ -343,32 +344,23 @@ const BookingForm = () => {
             <button onClick={() => handleExportBookings('csv')} className="export-btn">Export CSV</button>
             <button onClick={() => handleExportBookings('json')} className="export-btn">Export JSON</button>
             <input type="file" accept=".csv,.json" onChange={(e) => handleImportBookings(e.target.files[0])} className="import-input" />
-            <input
-              type="text"
-              placeholder="Filter by customer name..."
-              value={filters.text}
-              onChange={(e) => handleFilterChange('text', e.target.value)}
-              style={{ marginRight: '10px', padding: '5px' }}
-            />
-            <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} style={{ marginRight: '10px', padding: '5px' }}>
-              <option value="">All Statuses</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <input
-              type="date"
-              placeholder="Check-in Start"
-              value={filters.checkInStart}
-              onChange={(e) => handleFilterChange('checkInStart', e.target.value)}
-              style={{ marginRight: '10px', padding: '5px' }}
-            />
-            <input
-              type="date"
-              placeholder="Check-in End"
-              value={filters.checkInEnd}
-              onChange={(e) => handleFilterChange('checkInEnd', e.target.value)}
-              style={{ padding: '5px' }}
+            <FilterPanel
+              fields={[
+                { name: 'text', label: 'Customer', placeholder: 'Filter by customer name...' },
+                { name: 'status', label: 'Status', type: 'select', options: [
+                  { value: '', label: 'All Statuses' },
+                  { value: 'confirmed', label: 'Confirmed' },
+                  { value: 'pending', label: 'Pending' },
+                  { value: 'cancelled', label: 'Cancelled' }
+                ] },
+                { name: 'checkInStart', label: 'Check-in Start', type: 'date' },
+                { name: 'checkInEnd', label: 'Check-in End', type: 'date' }
+              ]}
+              values={filters}
+              onChange={handleFilterChange}
+              onApply={() => {}}
+              onReset={() => setFilters({ text: '', status: '', checkInStart: '', checkInEnd: '' })}
+              className="admin-filters"
             />
           </div>
           <DataTable

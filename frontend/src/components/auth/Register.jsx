@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../../api';
+import DataTable from '../common/DataTable';
+import FilterPanel from '../common/FilterPanel';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
 
@@ -15,6 +19,10 @@ const Register = () => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState('');
+  const [users, setUsers] = useState([]);
+  const [filters, setFilters] = useState({ text: '', role: '' });
+  const [selectedItems, setSelectedItems] = useState([]);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,16 +41,10 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => data.append(key, value));
       if (image) data.append('image', image);
-      // Only send Authorization header if token exists and is not 'null' or empty
-      const headers = { 'Content-Type': 'multipart/form-data' };
-      if (token && token !== 'null') {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const response = await axios.post('http://localhost:3000/register', data, { headers });
+      const response = await api.post('/register', data);
       setMessage('User registered successfully!');
       setFormData({
         username: '',
@@ -71,20 +73,85 @@ const Register = () => {
     // Admin utility handlers
     const isAdmin = localStorage.getItem('role') === 'admin';
     const handleExport = (format) => {
-      const content = format === 'csv' ? 'username,fullname,email,phone,aadharno,role\n' : JSON.stringify(formData, null, 2);
-      const blob = new Blob([content], { type: format === 'csv' ? 'text/csv' : 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `user.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const dataToExport = selectedItems.length > 0 ? users.filter(u => selectedItems.includes(u._id)) : filteredUsers;
+      if (format === 'csv') {
+        const header = 'username,fullname,email,phone,aadharno,role\n';
+        const rows = dataToExport.map(u => `${u.username},${u.fullname},${u.email},${u.phone},${u.aadharno || ''},${u.role}`).join('\n');
+        const blob = new Blob([header + rows], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
     };
     const handleImport = (file) => {
       const reader = new FileReader();
       reader.onload = (e) => alert('Imported file content: ' + e.target.result);
       reader.readAsText(file);
     };
+
+    useEffect(() => {
+      if (localStorage.getItem('role') === 'admin') fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get('/admin/dashboard');
+        setUsers(res.data.users || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    const handleDelete = async (id) => {
+      try {
+        await api.delete(`/admin/dashboard/users/${id}`);
+        fetchUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
+    };
+
+    const handleEdit = (item) => {
+      navigate('/admin/dashboard', { state: { editing: { ...item, type: 'users' } } });
+    };
+
+    const handleSelectItem = (id) => {
+      setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleSelectAll = () => {
+      const allIds = filteredUsers.map(u => u._id);
+      setSelectedItems(prev => prev.length === allIds.length ? [] : allIds);
+    };
+
+    const handleBulkDelete = async () => {
+      if (selectedItems.length === 0) return;
+      try {
+        await Promise.all(selectedItems.map(id => api.delete(`/admin/dashboard/users/${id}`)));
+        setSelectedItems([]);
+        fetchUsers();
+      } catch (error) {
+        console.error('Error bulk deleting users:', error);
+      }
+    };
+  
+    const filteredUsers = users.filter(u => {
+      const text = filters.text.toLowerCase();
+      if (filters.role && u.role !== filters.role) return false;
+      if (!text) return true;
+      return [u.username, u.fullname, u.email, u.phone, u.role].join(' ').toLowerCase().includes(text);
+    });
   return (
     <div style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '20px' }}>
         {isAdmin && (
@@ -192,6 +259,52 @@ const Register = () => {
         <button type="submit">Register User</button>
       </form>
       {message && <p>{message}</p>}
+      {isAdmin && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Users</h3>
+
+          {/* Export and file input just below Users headline */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+            <button onClick={() => handleExport('csv')}>Export CSV</button>
+            <button onClick={() => handleExport('json')}>Export JSON</button>
+            <input
+              type="file"
+              accept=".csv,.json"
+              onChange={e => handleImport(e.target.files[0])}
+              style={{ marginLeft: 8 }}
+            />
+            <button onClick={handleBulkDelete} disabled={selectedItems.length === 0}>Delete Selected</button>
+            <button onClick={fetchUsers}>Refresh</button>
+          </div>
+
+          {/* Reusable FilterPanel (replaces old inline filters) */}
+          <FilterPanel
+            fields={[
+              { name: 'text', label: 'Search', placeholder: 'Filter by username, email or name...' },
+              { name: 'role', label: 'Role', type: 'select', options: [
+                { value: '', label: 'All roles' },
+                { value: 'customer', label: 'Customer' },
+                { value: 'admin', label: 'Admin' }
+              ] }
+            ]}
+            values={filters}
+            onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+            onApply={() => {}}
+            onReset={() => setFilters({ text: '', role: '' })}
+            className="admin-filters"
+          />
+
+          <DataTable
+            data={filteredUsers}
+            type="users"
+            selectedItems={selectedItems}
+            onSelectItem={(t, id) => handleSelectItem(id)}
+            onSelectAll={() => handleSelectAll()}
+            onEdit={(item) => handleEdit(item)}
+            onDelete={(t, id) => handleDelete(id)}
+          />
+        </div>
+      )}
     </div>
   );
 };

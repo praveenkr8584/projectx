@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import DataTable from '../common/DataTable';
+import FilterPanel from '../common/FilterPanel';
 
 const AddRoomForm = () => {
   const [formData, setFormData] = useState({
@@ -258,19 +259,22 @@ const AddRoomForm = () => {
         <button onClick={() => handleExport('rooms', 'csv')} className="export-btn">Export CSV</button>
         <button onClick={() => handleExport('rooms', 'json')} className="export-btn">Export JSON</button>
         <input type="file" accept=".csv,.json" onChange={(e) => handleImport('rooms', e.target.files[0])} className="import-input" />
-        <input
-          type="text"
-          placeholder="Filter by room number..."
-          value={filters.text}
-          onChange={(e) => setFilters({ ...filters, text: e.target.value })}
-          style={{ marginRight: '10px', padding: '5px' }}
+        <FilterPanel
+          fields={[
+            { name: 'text', label: 'Room', placeholder: 'Filter by room number...' },
+            { name: 'status', label: 'Status', type: 'select', options: [
+              { value: '', label: 'All Statuses' },
+              { value: 'available', label: 'Available' },
+              { value: 'occupied', label: 'Occupied' },
+              { value: 'maintenance', label: 'Maintenance' }
+            ] }
+          ]}
+          values={filters}
+          onChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}
+          onApply={() => {}}
+          onReset={() => setFilters({ text: '', status: '' })}
+          className="admin-filters"
         />
-        <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} style={{ padding: '5px' }}>
-          <option value="">All Statuses</option>
-          <option value="available">Available</option>
-          <option value="occupied">Occupied</option>
-          <option value="maintenance">Maintenance</option>
-        </select>
       </div>
       <DataTable
         data={filteredRooms}

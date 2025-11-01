@@ -259,6 +259,24 @@ router.delete('/services/:id', authenticateToken, authorizeAdmin, async (req, re
     }
 });
 
+// Delete User (admin)
+router.delete('/dashboard/users/:id', authenticateToken, authorizeAdmin, async (req, res) => {
+    try {
+        // Prevent admin from accidentally deleting themselves
+        if (req.user.id === req.params.id) return res.status(400).json({ error: 'Cannot delete yourself' });
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        await User.findByIdAndDelete(req.params.id);
+        await logAudit('delete', 'user', req.params.id, req.user.id, { deletedValues: user });
+        res.json({ message: 'User deleted' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Audit Logs
 router.get('/audit-logs', authenticateToken, authorizeAdmin, async (req, res) => {
     try {
