@@ -73,23 +73,57 @@ router.post('/register', upload.single('image'), async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await User.findOne({ username });
-        if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-        let isMatch;
-        if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$')) {
-            isMatch = await bcrypt.compare(password, user.password);
-        } else {
-            isMatch = password === user.password;
+        // Validate input
+        if (!username || !password) {
+            console.error('Login validation error: Missing username or password');
+            return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+        // Find user
+        const user = await User.findOne({ username });
+        if (!user) {
+            console.error('Login error: User not found', { username });
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
 
+        // Check password
+        let isMatch;
+        try {
+            if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$')) {
+                isMatch = await bcrypt.compare(password, user.password);
+            } else {
+                isMatch = password === user.password;
+            }
+        } catch (compareError) {
+            console.error('Password comparison error:', compareError);
+            return res.status(500).json({ error: 'Authentication failed. Please try again.' });
+        }
+
+        if (!isMatch) {
+            console.error('Login error: Invalid password for user', { username });
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        // Generate token
         const secret = user.role === 'admin' ? process.env.ADMIN_SECRET : process.env.CUSTOMER_SECRET;
-        const token = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1h' });
+        if (!secret) {
+            console.error('Login error: Missing secret for role', { role: user.role });
+            return res.status(500).json({ error: 'Authentication configuration error' });
+        }
+
+        let token;
+        try {
+            token = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1h' });
+        } catch (tokenError) {
+            console.error('Token generation error:', tokenError);
+            return res.status(500).json({ error: 'Failed to generate authentication token' });
+        }
+
         res.json({ token, role: user.role, user: { id: user._id, username: user.username, role: user.role } });
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Login internal server error:', error.message);
+        res.status(500).json({ error: 'Internal server error. Please try again later.' });
     }
 });
 
