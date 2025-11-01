@@ -4,7 +4,7 @@ const path = require('path');
 const connectDB = require('./config/database');
 
 const app = express();
-
+const PORT = process.env.PORT || 3000;
 // Connect to database
 connectDB();
 
@@ -25,6 +25,6 @@ app.use('/admin', adminRoutes);
 app.use('/user', userRoutes);
 app.use('/', publicRoutes);
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
     console.log('Server is running on port 3000');
 });
