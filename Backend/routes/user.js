@@ -1,5 +1,5 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { authenticateToken, authorizeCustomer } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const User = require('../models/user');
