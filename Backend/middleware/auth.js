@@ -9,6 +9,12 @@ const authenticateToken = (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Access denied' });
 
+    // Additional security check: Ensure signature length is correct for HS256 (43 characters)
+    const parts = token.split('.');
+    if (parts.length !== 3 || parts[2].length !== 43) {
+        return res.status(400).json({ error: 'Invalid token format' });
+    }
+
     try {
         // Try verifying with customer secret first
         let verified = jwt.verify(token, customerSecret);
