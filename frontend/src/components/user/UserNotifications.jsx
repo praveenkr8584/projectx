@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const UserNotifications = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -10,7 +11,7 @@ const UserNotifications = () => {
     const fetchNotifications = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3000/user/notifications', {
+        const response = await axios.get(`${url}/user/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setNotifications(response.data);

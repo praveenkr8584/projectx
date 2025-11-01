@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Profile = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [profile, setProfile] = useState(null);
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -13,12 +14,12 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/profile', {
+      const response = await axios.get(`${url}/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(response.data);
       if (response.data.image) {
-        setImagePreview(`http://localhost:3000/uploads/${response.data.image}`);
+        setImagePreview(`${url}/uploads/${response.data.image}`);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -39,7 +40,7 @@ const Profile = () => {
       const token = localStorage.getItem('token');
       const data = new FormData();
       data.append('image', imageFile);
-      await axios.put('http://localhost:3000/user/profile', data, {
+      await axios.put(`${url}/user/profile`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

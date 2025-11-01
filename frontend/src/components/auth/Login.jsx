@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3000/login', formData);
+      const response = await axios.post(`${url}/login`, formData);
       const { token, role } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);

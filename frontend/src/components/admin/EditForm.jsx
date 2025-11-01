@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const EditForm = ({ item, type, onSave, onCancel }) => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [formData, setFormData] = useState(item || {});
 
   useEffect(() => {
@@ -16,7 +17,7 @@ const EditForm = ({ item, type, onSave, onCancel }) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/admin/dashboard/${type}/${formData._id}`, formData, {
+      await axios.put(`${url}/admin/dashboard/${type}/${formData._id}`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       onSave();

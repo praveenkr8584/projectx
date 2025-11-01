@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const UserProfile = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [profile, setProfile] = useState({
     fullname: '',
     email: '',
@@ -26,7 +27,7 @@ const UserProfile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3000/profile', {
+        const response = await axios.get(`${url}/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProfile({
@@ -37,7 +38,7 @@ const UserProfile = () => {
           image: response.data.image || '',
         });
         if (response.data.image) {
-          setImagePreview(`http://localhost:3000/uploads/${response.data.image}`);
+          setImagePreview(`${url}/uploads/${response.data.image}`);
         }
       } catch (error) {
         setError('Failed to load profile');
@@ -76,7 +77,7 @@ const UserProfile = () => {
       data.append('phone', profile.phone);
       data.append('aadharno', profile.aadharno);
       if (imageFile) data.append('image', imageFile);
-      await axios.put('http://localhost:3000/user/profile', data, {
+      await axios.put(`${url}/user/profile`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -101,7 +102,7 @@ const UserProfile = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:3000/user/change-password', {
+      await axios.put(`${url}/user/change-password`, {
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword
       }, {

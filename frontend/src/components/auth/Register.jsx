@@ -6,7 +6,7 @@ import FilterPanel from '../common/FilterPanel';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
-
+  
   const [formData, setFormData] = useState({
     username: '',
     fullname: '',

@@ -6,6 +6,7 @@ import EditForm from '../admin/EditForm';
 import { useNavigate } from 'react-router-dom';
 
 const BookingForm = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [formData, setFormData] = useState({
@@ -40,7 +41,7 @@ const BookingForm = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/rooms');
+        const response = await axios.get(`${url}/rooms`);
         setRooms(response.data);
       } catch (error) {
         console.error('Error fetching rooms:', error);
@@ -57,7 +58,7 @@ const BookingForm = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get('http://localhost:3000/admin/dashboard', { headers });
+      const response = await axios.get(`${url}/admin/dashboard`, { headers });
       setBookings(response.data.bookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -85,7 +86,7 @@ const BookingForm = () => {
         checkInDate: formData.checkInDate,
         checkOutDate: formData.checkOutDate
       });
-      const response = await axios.get(`http://localhost:3000/rooms/available?${queryParams}`);
+      const response = await axios.get(`${url}/rooms/available?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
@@ -100,7 +101,7 @@ const BookingForm = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:3000/booking', formData, {
+      const response = await axios.post(`${url}/booking`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Booking successful!');
@@ -143,7 +144,7 @@ const BookingForm = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      await Promise.all(selectedItems.map(id => axios.delete(`http://localhost:3000/admin/dashboard/bookings/${id}`, { headers })));
+      await Promise.all(selectedItems.map(id => axios.delete(`${url}/admin/dashboard/bookings/${id}`, { headers })));
       setSelectedItems([]);
       fetchBookings();
     } catch (error) {
@@ -183,7 +184,7 @@ const BookingForm = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post('http://localhost:3000/admin/dashboard/bookings/import', formDataImport, { headers });
+      await axios.post(`${url}/admin/dashboard/bookings/import`, formDataImport, { headers });
       fetchBookings();
       alert('Import successful');
     } catch (error) {
@@ -369,7 +370,7 @@ const BookingForm = () => {
             onEdit={handleEdit}
             onDelete={(id) => {
               const token = localStorage.getItem('token');
-              axios.delete(`http://localhost:3000/admin/dashboard/bookings/${id}`, {
+              axios.delete(`${url}/admin/dashboard/bookings/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
               }).then(() => fetchBookings());
             }}

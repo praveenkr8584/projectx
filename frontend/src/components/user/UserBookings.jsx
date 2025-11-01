@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const UserBookings = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -13,7 +14,7 @@ const UserBookings = () => {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/user/bookings', {
+      const response = await axios.get(`${url}/user/bookings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(response.data);
@@ -29,7 +30,7 @@ const UserBookings = () => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/user/bookings/${bookingId}/cancel`, {}, {
+      await axios.put(`${url}/user/bookings/${bookingId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchBookings(); // Refresh bookings list

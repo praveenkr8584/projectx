@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const RoomList = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,7 +25,7 @@ const RoomList = () => {
         if (filters[key]) queryParams.append(key, filters[key]);
       });
 
-      const response = await axios.get(`http://localhost:3000/rooms?${queryParams}`);
+      const response = await axios.get(`${url}/rooms?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       setError('Failed to load rooms');

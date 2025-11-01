@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,7 +12,7 @@ const UserDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:3000/user/dashboard', {
+        const response = await axios.get(`${url}/user/dashboard`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setDashboardData(response.data);

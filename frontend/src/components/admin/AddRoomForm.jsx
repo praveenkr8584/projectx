@@ -5,6 +5,7 @@ import DataTable from '../common/DataTable';
 import FilterPanel from '../common/FilterPanel';
 
 const AddRoomForm = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [formData, setFormData] = useState({
     roomNumber: '',
     type: '',
@@ -32,7 +33,7 @@ const AddRoomForm = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get('http://localhost:3000/admin/dashboard', { headers });
+      const response = await axios.get(`${url}/admin/dashboard`, { headers });
       setRooms(response.data.rooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -42,7 +43,7 @@ const AddRoomForm = () => {
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3000/admin/dashboard/rooms/${id}`, {
+      await axios.delete(`${url}/admin/dashboard/rooms/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchRooms();
@@ -69,7 +70,7 @@ const AddRoomForm = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      await Promise.all(selectedItems.map(id => axios.delete(`http://localhost:3000/admin/dashboard/rooms/${id}`, { headers })));
+      await Promise.all(selectedItems.map(id => axios.delete(`${url}/admin/dashboard/rooms/${id}`, { headers })));
       setSelectedItems([]);
       fetchRooms();
     } catch (error) {
@@ -110,7 +111,7 @@ const AddRoomForm = () => {
         }
       });
       images.forEach((img) => data.append('images', img));
-      await axios.post('http://localhost:3000/admin/dashboard/rooms', data, {
+      await axios.post(`${url}/admin/dashboard/rooms`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

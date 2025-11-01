@@ -29,6 +29,7 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
+  const url='https://projectx-backend-q4wb.onrender.com';
   const [data, setData] = useState({ rooms: [], bookings: [], services: [], users: [] });
   const [editing, setEditing] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -62,10 +63,10 @@ const AdminDashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       // Fetch current user profile to get user ID
-      const profileRes = await axios.get('http://localhost:3000/profile', { headers });
+      const profileRes = await axios.get(`${url}/profile`, { headers });
       setCurrentUserId(profileRes.data.id);
 
-      const dashboardRes = await axios.get('http://localhost:3000/admin/dashboard', { headers });
+      const dashboardRes = await axios.get(`${url}/admin/dashboard`, { headers });
 
       setData({
         rooms: dashboardRes.data.rooms,
@@ -82,7 +83,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      const statsRes = await axios.get('http://localhost:3000/admin/stats', { headers });
+      const statsRes = await axios.get(`${url}/admin/stats`, { headers });
       setStats(statsRes.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -93,7 +94,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      const chartRes = await axios.get('http://localhost:3000/admin/chart-data', { headers });
+      const chartRes = await axios.get(`${url}/admin/chart-data`, { headers });
       setChartData(chartRes.data);
     } catch (error) {
       console.error('Error fetching chart data:', error);
@@ -106,10 +107,10 @@ const AdminDashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [monthlyRes, yearlyRes, occupancyRes, auditRes] = await Promise.all([
-        axios.get('http://localhost:3000/admin/reports/revenue/monthly', { headers }),
-        axios.get('http://localhost:3000/admin/reports/revenue/yearly', { headers }),
-        axios.get('http://localhost:3000/admin/reports/occupancy', { headers }),
-        axios.get('http://localhost:3000/admin/audit-logs', { headers })
+        axios.get(`${url}/admin/reports/revenue/monthly`, { headers }),
+        axios.get(`${url}/admin/reports/revenue/yearly`, { headers }),
+        axios.get(`${url}/admin/reports/occupancy`, { headers }),
+        axios.get(`${url}/admin/audit-logs`, { headers })
       ]);
 
       setReports({
@@ -126,7 +127,7 @@ const AdminDashboard = () => {
   const handleDelete = async (type, id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:3000/admin/dashboard/${type}/${id}`, {
+      await axios.delete(`${url}/admin/dashboard/${type}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -184,7 +185,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      await Promise.all(selectedItems[type].map(id => axios.delete(`http://localhost:3000/admin/dashboard/${type}/${id}`, { headers })));
+      await Promise.all(selectedItems[type].map(id => axios.delete(`${url}/admin/dashboard/${type}/${id}`, { headers })));
       setSelectedItems(prev => ({ ...prev, [type]: [] }));
       fetchData();
     } catch (error) {
@@ -224,7 +225,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`http://localhost:3000/admin/dashboard/${type}/import`, formData, { headers });
+      await axios.post(`${url}/admin/dashboard/${type}/import`, formData, { headers });
       fetchData();
       alert('Import successful');
     } catch (error) {
