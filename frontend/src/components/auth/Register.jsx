@@ -4,9 +4,11 @@ import api from '../../api';
 import DataTable from '../common/DataTable';
 import FilterPanel from '../common/FilterPanel';
 import { useNavigate } from 'react-router-dom';
+import './Register.css';
 
 const Register = () => {
-  
+
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     fullname: '',
@@ -153,157 +155,170 @@ const Register = () => {
       return [u.username, u.fullname, u.email, u.phone, u.role].join(' ').toLowerCase().includes(text);
     });
   return (
-    <div style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '20px' }}>
+    <div className="register-container">
+      {/* Section 1: Form Section */}
+      <section className="register-form-section">
+        <button className="toggle-button" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Hide Registration Form' : 'Add New User'}
+        </button>
         {isAdmin && (
-          <div style={{
-            maxWidth: '400px',
-            margin: '0 auto 1rem auto',
-            padding: '1rem 2rem',
-            background: 'white',
-            borderRadius: '10px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start'
-          }}>
-            <label htmlFor="user-upload" style={{
-              fontWeight: 500,
-              marginBottom: '0.5rem',
-              fontSize: '1rem',
-              color: '#333'
-            }}>
-              upload user information using csv or json file
+          <div className="register-upload-section">
+            <label htmlFor="user-upload">
+              Upload user information using CSV or JSON file
             </label>
             <input
               id="user-upload"
               type="file"
               accept=".csv,.json"
               onChange={e => handleImport(e.target.files[0])}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: '1rem',
-                background: '#fafafa',
-                marginBottom: 0
-              }}
             />
           </div>
         )}
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ fontWeight: 500, marginBottom: 4, display: 'block' }}>Profile Image (optional)</label>
+        <form className={`register-form ${showForm ? 'show' : ''}`} onSubmit={handleSubmit} encType="multipart/form-data">
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ fontWeight: 500, marginBottom: 4, display: 'block' }}>Profile Image (optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: 'block', marginBottom: 8 }}
+            />
+            {preview && (
+              <img src={preview} alt="Preview" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginTop: 4 }} />
+            )}
+          </div>
           <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            style={{ display: 'block', marginBottom: 8 }}
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            required
           />
-          {preview && (
-            <img src={preview} alt="Preview" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginTop: 4 }} />
-          )}
-        </div>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="text"
-          name="fullname"
-          placeholder="Full Name"
-          value={formData.fullname}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="tel"
-          name="phone"
-          placeholder="Phone"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="number"
-          name="aadharno"
-          placeholder="Aadhar Number"
-          value={formData.aadharno}
-          onChange={handleChange}
-          required
-        />
-        <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="customer">Customer</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button type="submit">Register User</button>
-      </form>
-      {message && <p>{message}</p>}
-      {isAdmin && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Users</h3>
+          <input
+            type="text"
+            name="fullname"
+            placeholder="Full Name"
+            value={formData.fullname}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="number"
+            name="aadharno"
+            placeholder="Aadhar Number"
+            value={formData.aadharno}
+            onChange={handleChange}
+            required
+          />
+          <select name="role" value={formData.role} onChange={handleChange}>
+            <option value="customer">Customer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit">Register User</button>
+        </form>
+        {message && (
+          <div className={`register-message ${message.includes('successfully') ? 'success' : 'error'}`}>
+            {message}
+          </div>
+        )}
+      </section>
 
-          {/* Export and file input just below Users headline */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+      {/* Section 2: Current Users Section */}
+      {isAdmin && (
+        <section className="register-users-section">
+          <h3>Current Users</h3>
+
+          <div className="register-filter-panel">
+            <FilterPanel
+              fields={[
+                { name: 'text', label: 'Search', placeholder: 'Filter by username, email or name...' },
+                { name: 'role', label: 'Role', type: 'select', options: [
+                  { value: '', label: 'All roles' },
+                  { value: 'customer', label: 'Customer' },
+                  { value: 'admin', label: 'Admin' }
+                ] }
+              ]}
+              values={filters}
+              onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+              onApply={() => {}}
+              onReset={() => setFilters({ text: '', role: '' })}
+              className="admin-filters"
+            />
+          </div>
+
+          <div className="register-actions">
             <button onClick={() => handleExport('csv')}>Export CSV</button>
             <button onClick={() => handleExport('json')}>Export JSON</button>
             <input
               type="file"
               accept=".csv,.json"
               onChange={e => handleImport(e.target.files[0])}
-              style={{ marginLeft: 8 }}
             />
             <button onClick={handleBulkDelete} disabled={selectedItems.length === 0}>Delete Selected</button>
             <button onClick={fetchUsers}>Refresh</button>
           </div>
 
-          {/* Reusable FilterPanel (replaces old inline filters) */}
-          <FilterPanel
-            fields={[
-              { name: 'text', label: 'Search', placeholder: 'Filter by username, email or name...' },
-              { name: 'role', label: 'Role', type: 'select', options: [
-                { value: '', label: 'All roles' },
-                { value: 'customer', label: 'Customer' },
-                { value: 'admin', label: 'Admin' }
-              ] }
-            ]}
-            values={filters}
-            onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
-            onApply={() => {}}
-            onReset={() => setFilters({ text: '', role: '' })}
-            className="admin-filters"
-          />
-
-          <DataTable
-            data={filteredUsers}
-            type="users"
-            selectedItems={selectedItems}
-            onSelectItem={(t, id) => handleSelectItem(id)}
-            onSelectAll={() => handleSelectAll()}
-            onEdit={(item) => handleEdit(item)}
-            onDelete={(t, id) => handleDelete(id)}
-          />
-        </div>
+          <table className="register-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map(user => (
+                <tr key={user._id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(user._id)}
+                      onChange={() => handleSelectItem(user._id)}
+                    />
+                  </td>
+                  <td>{user.username}</td>
+                  <td>{user.fullname}</td>
+                  <td>{user.email}</td>
+                  <td>{user.phone}</td>
+                  <td>{user.role}</td>
+                  <td>
+                    <button onClick={() => handleEdit(user)}>Edit</button>
+                    <button onClick={() => handleDelete(user._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       )}
     </div>
   );

@@ -446,7 +446,7 @@ p[style*="color: red"] {
   left: 0;
   right: 0;
   z-index: 999;
-  background: transparent;
+  background: white;
   border: 1px solid transparent;
   padding: 0.5rem 4rem;
   box-shadow: none;
