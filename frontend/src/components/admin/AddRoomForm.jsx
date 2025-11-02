@@ -262,8 +262,8 @@ const AddRoomForm = () => {
         <input type="file" accept=".csv,.json" onChange={(e) => handleImport('rooms', e.target.files[0])} className="import-input" />
         <FilterPanel
           fields={[
-            { name: 'text', label: 'Room', placeholder: 'Filter by room number...' },
-            { name: 'status', label: 'Status', type: 'select', options: [
+            { name: 'text', placeholder: 'Filter by room number...' },
+            { name: 'status', type: 'select', options: [
               { value: '', label: 'All Statuses' },
               { value: 'available', label: 'Available' },
               { value: 'occupied', label: 'Occupied' },

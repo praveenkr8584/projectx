@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import DataTable from '../common/DataTable';
-import EditForm from './EditForm';
-import { Bar, Line } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
   LineElement,
   PointElement,
   Title,
@@ -20,7 +16,6 @@ import './AdminDashboard.css';
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
   LineElement,
   PointElement,
   Title,
@@ -29,17 +24,7 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
-  const url='https://projectx-backend-q4wb.onrender.com';
-  const [data, setData] = useState({ rooms: [], bookings: [], services: [], users: [] });
-  const [editing, setEditing] = useState(null);
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [filters, setFilters] = useState({
-    rooms: { text: '', status: '' },
-    bookings: { text: '', status: '', checkInStart: '', checkInEnd: '' },
-    services: { text: '', priceMin: '', priceMax: '' },
-    users: { text: '', role: '', status: '' }
-  });
-  const [selectedItems, setSelectedItems] = useState({ rooms: [], bookings: [], services: [], users: [] });
+  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [stats, setStats] = useState({});
   const [chartData, setChartData] = useState({});
   const [reports, setReports] = useState({
@@ -48,36 +33,12 @@ const AdminDashboard = () => {
     occupancy: {},
     auditLogs: []
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchData();
     fetchStats();
     fetchChartData();
     fetchReports();
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-
-      // Fetch current user profile to get user ID
-      const profileRes = await axios.get(`${url}/profile`, { headers });
-      setCurrentUserId(profileRes.data.id);
-
-      const dashboardRes = await axios.get(`${url}/admin/dashboard`, { headers });
-
-      setData({
-        rooms: dashboardRes.data.rooms,
-        bookings: dashboardRes.data.bookings,
-        services: dashboardRes.data.services,
-        users: dashboardRes.data.users
-      });
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
 
   const fetchStats = async () => {
     try {
@@ -124,138 +85,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDelete = async (type, id) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${url}/admin/dashboard/${type}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
 
-      // If the deleted user is the current user, logout immediately
-      if (type === 'users' && id === currentUserId) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
-        navigate('/');
-        return;
-      }
-
-      fetchData();
-    } catch (error) {
-      console.error('Error deleting:', error);
-    }
-  };
-
-  const handleEdit = (item, type) => {
-    setEditing({ ...item, type });
-  };
-
-  const handleSave = () => {
-    setEditing(null);
-    fetchData();
-  };
-
-  const handleCancel = () => {
-    setEditing(null);
-  };
-
-  const handleFilterChange = (type, key, value) => {
-    setFilters(prev => ({ ...prev, [type]: { ...prev[type], [key]: value } }));
-  };
-
-  const handleSelectItem = (type, id) => {
-    setSelectedItems(prev => ({
-      ...prev,
-      [type]: prev[type].includes(id)
-        ? prev[type].filter(itemId => itemId !== id)
-        : [...prev[type], id]
-    }));
-  };
-
-  const handleSelectAll = (type) => {
-    const allIds = filteredData[type].map(item => item._id);
-    setSelectedItems(prev => ({
-      ...prev,
-      [type]: prev[type].length === allIds.length ? [] : allIds
-    }));
-  };
-
-  const handleBulkDelete = async (type) => {
-    if (selectedItems[type].length === 0) return;
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      await Promise.all(selectedItems[type].map(id => axios.delete(`${url}/admin/dashboard/${type}/${id}`, { headers })));
-      setSelectedItems(prev => ({ ...prev, [type]: [] }));
-      fetchData();
-    } catch (error) {
-      console.error('Error bulk deleting:', error);
-    }
-  };
-
-  const handleExport = (type, format) => {
-    const data = filteredData[type];
-    let content = '';
-    let filename = `${type}.${format}`;
-    let mimeType = '';
-
-    if (format === 'csv') {
-      const headers = Object.keys(data[0] || {}).join(',');
-      const rows = data.map(item => Object.values(item).join(','));
-      content = [headers, ...rows].join('\n');
-      mimeType = 'text/csv';
-    } else if (format === 'json') {
-      content = JSON.stringify(data, null, 2);
-      mimeType = 'application/json';
-    }
-
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = async (type, file) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${url}/admin/dashboard/${type}/import`, formData, { headers });
-      fetchData();
-      alert('Import successful');
-    } catch (error) {
-      console.error('Error importing:', error);
-      alert('Import failed');
-    }
-  };
-
-  const filteredData = {
-    rooms: data.rooms.filter(room =>
-      room.roomNumber.toLowerCase().includes(filters.rooms.text.toLowerCase()) &&
-      (filters.rooms.status === '' || room.status === filters.rooms.status)
-    ),
-    bookings: data.bookings.filter(booking =>
-      booking.customerName.toLowerCase().includes(filters.bookings.text.toLowerCase()) &&
-      (filters.bookings.status === '' || booking.status === filters.bookings.status) &&
-      (!filters.bookings.checkInStart || new Date(booking.checkInDate) >= new Date(filters.bookings.checkInStart)) &&
-      (!filters.bookings.checkInEnd || new Date(booking.checkInDate) <= new Date(filters.bookings.checkInEnd))
-    ),
-    services: data.services.filter(service =>
-      service.name.toLowerCase().includes(filters.services.text.toLowerCase()) &&
-      (!filters.services.priceMin || service.price >= parseFloat(filters.services.priceMin)) &&
-      (!filters.services.priceMax || service.price <= parseFloat(filters.services.priceMax))
-    ),
-    users: data.users.filter(user =>
-      (user.username.toLowerCase().includes(filters.users.text.toLowerCase()) || user.email.toLowerCase().includes(filters.users.text.toLowerCase())) &&
-      (filters.users.role === '' || user.role === filters.users.role) &&
-      (filters.users.status === '' || (user.status && user.status.toLowerCase() === filters.users.status.toLowerCase()))
-    )
-  };
 
   // Prepare chart data
   const bookingsChartData = {
@@ -284,15 +114,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      {editing && (
-        <EditForm
-          item={editing}
-          type={editing.type}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
-      )}
-
       {/* Quick Stats */}
       <div className="stats-section" style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
         <div><strong>Total Rooms:</strong> {stats.totalRooms || 0}</div>
@@ -313,8 +134,6 @@ const AdminDashboard = () => {
           <Line data={revenueChartData} />
         </div>
       </div>
-
-      {/* Users filters removed — listings live on dedicated admin pages */}
 
       {/* Reports Section */}
       <div className="reports-section" style={{ marginBottom: '20px' }}>
@@ -419,8 +238,6 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
-
-
 
       {/* Services, Users and listing controls moved to their dedicated admin pages:
           - Services -> /admin/add-service

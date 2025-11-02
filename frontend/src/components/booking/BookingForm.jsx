@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import axios from 'axios';
 import DataTable from '../common/DataTable';
 import FilterPanel from '../common/FilterPanel';
@@ -28,7 +28,6 @@ const BookingForm = () => {
     checkInEnd: ''
   });
   const [selectedItems, setSelectedItems] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -347,15 +346,15 @@ const BookingForm = () => {
             <input type="file" accept=".csv,.json" onChange={(e) => handleImportBookings(e.target.files[0])} className="import-input" />
             <FilterPanel
               fields={[
-                { name: 'text', label: 'Customer', placeholder: 'Filter by customer name...' },
-                { name: 'status', label: 'Status', type: 'select', options: [
+                { name: 'text', placeholder: 'Filter by customer name...' },
+                { name: 'status', type: 'select', options: [
                   { value: '', label: 'All Statuses' },
                   { value: 'confirmed', label: 'Confirmed' },
                   { value: 'pending', label: 'Pending' },
                   { value: 'cancelled', label: 'Cancelled' }
                 ] },
-                { name: 'checkInStart', label: 'Check-in Start', type: 'date' },
-                { name: 'checkInEnd', label: 'Check-in End', type: 'date' }
+                { name: 'checkInStart', type: 'date' },
+                { name: 'checkInEnd', type: 'date' }
               ]}
               values={filters}
               onChange={handleFilterChange}

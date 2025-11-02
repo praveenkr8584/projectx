@@ -174,9 +174,9 @@ const AddServiceForm = () => {
         <input type="file" accept=".csv,.json" onChange={(e) => handleImport(e.target.files[0])} className="import-input" />
         <FilterPanel
           fields={[
-            { name: 'text', label: 'Service', placeholder: 'Filter by service name...' },
-            { name: 'priceMin', label: 'Min Price', type: 'number' },
-            { name: 'priceMax', label: 'Max Price', type: 'number' }
+            { name: 'text', placeholder: 'Filter by service name...' },
+            { name: 'priceMin', type: 'number' },
+            { name: 'priceMax', type: 'number' }
           ]}
           values={filters}
           onChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}

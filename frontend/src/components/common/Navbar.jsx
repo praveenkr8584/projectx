@@ -34,10 +34,10 @@ const Navbar = ({ isLoggedIn, role, handleLogout }) => {
           <>
             <Link to="/admin/dashboard">Dashboard</Link>
             <Link to="/admin/profile">Profile</Link>
-            <Link to="/admin/register">Register</Link>
-            <Link to="/admin/booking">Book Room</Link>
-            <Link to="/admin/add-room">Add Room</Link>
-            <Link to="/admin/add-service">Add services</Link>
+            <Link to="/admin/users">Users</Link>
+            <Link to="/admin/booking">Bookings</Link>
+            <Link to="/admin/add-room">Rooms</Link>
+            <Link to="/admin/add-service">Services</Link>
           </>
         )}
       </div>
