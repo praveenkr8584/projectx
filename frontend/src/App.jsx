@@ -10,6 +10,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/common/Navbar';
 import AddRoomForm from './components/admin/AddRoomForm';
 import AddServiceForm from './components/admin/AddServiceForm';
+import Bookings from './components/admin/Bookings';
 import Users from './components/admin/Users';
 import UserDashboard from './components/user/UserDashboard';
 import UserProfile from './components/user/UserProfile';
@@ -55,7 +56,7 @@ function App() {
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/admin/booking" element={<ProtectedRoute><BookingForm /></ProtectedRoute>} />
+          <Route path="/admin/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
