@@ -53,7 +53,6 @@ const ServiceList = () => {
       <form onSubmit={handleFilterSubmit} className="filters horizontal-filters">
         <div className="filter-row">
           <div className="filter-group">
-            <label>Service Name:</label>
             <input
               type="text"
               name="name"
@@ -63,7 +62,6 @@ const ServiceList = () => {
             />
           </div>
           <div className="filter-group">
-            <label>Min Price:</label>
             <input
               type="number"
               name="minPrice"
@@ -73,7 +71,6 @@ const ServiceList = () => {
             />
           </div>
           <div className="filter-group">
-            <label>Max Price:</label>
             <input
               type="number"
               name="maxPrice"

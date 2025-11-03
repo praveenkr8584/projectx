@@ -17,8 +17,8 @@ import Users from './components/admin/Users';
 import UserDashboard from './components/user/UserDashboard';
 import UserProfile from './components/user/UserProfile';
 import UserBookings from './components/user/UserBookings';
-import RoomList from './components/rooms/RoomList';
-import ServiceList from './components/services/ServiceList';
+import UserRooms from './components/rooms/UserRooms';
+import UserServices from './components/services/UserServices';
 import UserNotifications from './components/user/UserNotifications';
 import './App.css';
 
@@ -69,9 +69,9 @@ function App() {
           <Route path="/user/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
           <Route path="/user/bookings" element={<ProtectedRoute><UserBookings /></ProtectedRoute>} />
-          <Route path="/rooms" element={<RoomList />} />
+          <Route path="/rooms" element={<UserRooms />} />
           <Route path="/booking" element={<ProtectedRoute><BookingForm /></ProtectedRoute>} />
-          <Route path="/services" element={<ServiceList />} />
+          <Route path="/services" element={<UserServices />} />
           <Route path="/user/notifications" element={<ProtectedRoute><UserNotifications /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

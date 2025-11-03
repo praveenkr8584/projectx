@@ -1,0 +1,126 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import './UserServices.css';
+
+const UserServices = () => {
+  const url = 'https://projectx-backend-q4wb.onrender.com';
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState({
+    name: '',
+    minPrice: '',
+    maxPrice: ''
+  });
+  const isLoggedIn = !!localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchServices();
+  }, [filters]);
+
+  const fetchServices = async () => {
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) queryParams.append(key, filters[key]);
+      });
+
+      const response = await axios.get(`${url}/services?${queryParams}`);
+      setServices(response.data);
+    } catch (error) {
+      setError('Failed to load services');
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    fetchServices();
+  };
+
+  const handleBookService = () => {
+    if (isLoggedIn) {
+      // Assuming booking logic here, e.g., redirect to booking page or show modal
+      alert('Booking service...');
+    } else {
+      window.location.href = '/login';
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div className="user-services">
+      {error && <div className="error">{error}</div>}
+
+      <section className="filter-section">
+        <form onSubmit={handleFilterSubmit} className="filters horizontal-filters">
+          <div className="filter-row">
+            <div className="filter-group">
+              <input
+                type="text"
+                name="name"
+                value={filters.name}
+                onChange={handleFilterChange}
+                placeholder="Search by name"
+              />
+            </div>
+            <div className="filter-group">
+              <input
+                type="number"
+                name="minPrice"
+                value={filters.minPrice}
+                onChange={handleFilterChange}
+                placeholder="Min Price"
+              />
+            </div>
+            <div className="filter-group">
+              <input
+                type="number"
+                name="maxPrice"
+                value={filters.maxPrice}
+                onChange={handleFilterChange}
+                placeholder="Max Price"
+              />
+            </div>
+            <button type="submit" className="btn">Apply Filters</button>
+          </div>
+        </form>
+      </section>
+
+      <section className="services-section">
+        <h2>Available Services</h2>
+        <div className="services-grid">
+          {services.length === 0 ? (
+            <p>No services available matching your criteria.</p>
+          ) : (
+            services.map(service => (
+              <div key={service._id} className="service-card">
+                <h3>{service.name}</h3>
+                <p>Price: ${service.price}</p>
+                <p>{service.description}</p>
+                {isLoggedIn ? (
+                  service.status === 'booked' ? (
+                    <p>Status: {service.status}</p>
+                  ) : (
+                    <button className="btn" onClick={handleBookService}>Book Service</button>
+                  )
+                ) : (
+                  <button className="btn" onClick={handleBookService}>Book Service</button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default UserServices;
