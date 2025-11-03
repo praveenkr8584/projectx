@@ -3,6 +3,7 @@ import axios from 'axios';
 import DataTable from '../common/DataTable';
 import FilterPanel from '../common/FilterPanel';
 import EditForm from './EditForm';
+import './Bookings.css';
 
 const Bookings = () => {
   const url = 'https://projectx-backend-q4wb.onrender.com';
@@ -202,7 +203,7 @@ const Bookings = () => {
   );
 
   return (
-    <div className="admin-bookings">
+    <div className="bookings-container">
       {editing && (
         <EditForm
           item={editing}
@@ -212,154 +213,157 @@ const Bookings = () => {
         />
       )}
 
-      <button onClick={() => setShowForm(!showForm)} style={{ marginBottom: '20px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}>
-        {showForm ? 'Hide Booking Form' : 'Show Booking Form'}
-      </button>
-
-      {showForm && (
-        <div style={{ border: '1px solid #ddd', padding: '20px', marginBottom: '20px', borderRadius: '5px' }}>
-          <div style={{
-            maxWidth: '400px',
-            margin: '0 auto 1rem auto',
-            padding: '1rem 2rem',
-            background: 'white',
-            borderRadius: '10px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start'
-          }}>
-            <label htmlFor="booking-upload" style={{
-              fontWeight: 500,
-              marginBottom: '0.5rem',
-              fontSize: '1rem',
-              color: '#333'
-            }}>
-              Upload booking information using csv or json file
-            </label>
-            <input
-              id="booking-upload"
-              type="file"
-              accept=".csv,.json"
-              onChange={e => handleImportBookings(e.target.files[0])}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: '1rem',
-                background: '#fafafa',
-                marginBottom: 0
-              }}
-            />
-          </div>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="customerName"
-              placeholder="Customer Name"
-              value={formData.customerName}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="email"
-              name="customerEmail"
-              placeholder="Customer Email"
-              value={formData.customerEmail}
-              onChange={handleChange}
-              required
-            />
-            <select name="roomType" value={formData.roomType} onChange={handleChange} required>
-              <option value="">Select Room Type</option>
-              <option value="Single Room">Single Room</option>
-              <option value="Double Room">Double Room</option>
-              <option value="Deluxe Room">Deluxe Room</option>
-              <option value="Suite">Suite</option>
-            </select>
-            <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
-              <option value="">Select Room</option>
-              {filteredRooms.map(room => (
-                <option key={room._id} value={room.roomNumber}>
-                  {room.roomNumber} - ${room.price}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              name="checkInDate"
-              value={formData.checkInDate}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="date"
-              name="checkOutDate"
-              value={formData.checkOutDate}
-              onChange={handleChange}
-              required
-            />
-            <button type="submit">Book Room</button>
-          </form>
-          {message && <p>{message}</p>}
-
-          {filteredRooms.length > 0 && (
-            <div className="room-options">
-              <h3>Available {formData.roomType}s</h3>
-              <div className="rooms-grid">
-                {filteredRooms.map(room => (
-                  <div key={room._id} className="room-card">
-                    <h4>Room {room.roomNumber}</h4>
-                    <p><strong>Price:</strong> ${room.price} per night</p>
-                    <p><strong>Features:</strong> {room.features.join(', ')}</p>
-                    <p><strong>Status:</strong> {room.status}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <h3>Bookings</h3>
-      {selectedItems.length > 0 && <button onClick={handleBulkDelete} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}>Delete Selected ({selectedItems.length})</button>}
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={() => handleExportBookings('csv')} className="export-btn">Export CSV</button>
-        <button onClick={() => handleExportBookings('json')} className="export-btn">Export JSON</button>
-        <input type="file" accept=".csv,.json" onChange={(e) => handleImportBookings(e.target.files[0])} className="import-input" />
+      {/* Section 1: Fixed Filter Panel */}
+      <section className="bookings-filter-section">
         <FilterPanel
           fields={[
-            { name: 'text', placeholder: 'Filter by customer name...' },
-            { name: 'status', type: 'select', options: [
-              { value: '', label: 'All Statuses' },
+            { name: 'text', label: 'Search', placeholder: 'Filter by customer name...' },
+            { name: 'status', label: 'Status', type: 'select', options: [
+              { value: '', label: 'All statuses' },
               { value: 'confirmed', label: 'Confirmed' },
               { value: 'pending', label: 'Pending' },
               { value: 'cancelled', label: 'Cancelled' }
             ] },
-            { name: 'checkInStart', type: 'date' },
-            { name: 'checkInEnd', type: 'date' }
+            { name: 'checkInStart', label: 'Check-in Start', type: 'date' },
+            { name: 'checkInEnd', label: 'Check-in End', type: 'date' }
           ]}
           values={filters}
-          onChange={handleFilterChange}
+          onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
           onApply={() => {}}
           onReset={() => setFilters({ text: '', status: '', checkInStart: '', checkInEnd: '' })}
           className="admin-filters"
         />
-      </div>
-      <DataTable
-        data={filteredBookings}
-        type="bookings"
-        onEdit={handleEdit}
-        onDelete={(id) => {
-          const token = localStorage.getItem('token');
-          axios.delete(`${url}/admin/dashboard/bookings/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }).then(() => fetchBookings());
-        }}
-        selectedItems={selectedItems}
-        onSelectItem={handleSelectItem}
-        onSelectAll={handleSelectAll}
-      />
+      </section>
+
+      {/* Section 2: Add Booking Section */}
+      <section className="bookings-add-section">
+        <button className="toggle-button" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Hide Add Booking Section' : 'Add New Booking'}
+        </button>
+        {showForm && (
+          <div className="add-booking-content">
+            {/* Upload Section */}
+            <div className="bookings-upload-section">
+              <h4>Upload Bookings</h4>
+              <label htmlFor="booking-upload">
+                Upload booking information using CSV or JSON file
+              </label>
+              <input
+                id="booking-upload"
+                type="file"
+                accept=".csv,.json"
+                onChange={e => handleImportBookings(e.target.files[0])}
+              />
+            </div>
+
+            {/* Booking Form */}
+            <div className="bookings-form-section">
+              <h4>Manual Booking</h4>
+              <form onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  name="customerName"
+                  placeholder="Customer Name"
+                  value={formData.customerName}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="email"
+                  name="customerEmail"
+                  placeholder="Customer Email"
+                  value={formData.customerEmail}
+                  onChange={handleChange}
+                  required
+                />
+                <select name="roomType" value={formData.roomType} onChange={handleChange} required>
+                  <option value="">Select Room Type</option>
+                  <option value="Single Room">Single Room</option>
+                  <option value="Double Room">Double Room</option>
+                  <option value="Deluxe Room">Deluxe Room</option>
+                  <option value="Suite">Suite</option>
+                </select>
+                <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
+                  <option value="">Select Room</option>
+                  {filteredRooms.map(room => (
+                    <option key={room._id} value={room.roomNumber}>
+                      {room.roomNumber} - ${room.price}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  name="checkInDate"
+                  value={formData.checkInDate}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="date"
+                  name="checkOutDate"
+                  value={formData.checkOutDate}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="submit">Book Room</button>
+              </form>
+              {message && (
+                <div className={`bookings-message ${message.includes('successful') ? 'success' : 'error'}`}>
+                  {message}
+                </div>
+              )}
+
+              {filteredRooms.length > 0 && (
+                <div className="room-options">
+                  <h3>Available {formData.roomType}s</h3>
+                  <div className="rooms-grid">
+                    {filteredRooms.map(room => (
+                      <div key={room._id} className="room-card">
+                        <h4>Room {room.roomNumber}</h4>
+                        <p><strong>Price:</strong> ${room.price} per night</p>
+                        <p><strong>Features:</strong> {room.features.join(', ')}</p>
+                        <p><strong>Status:</strong> {room.status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Section 3: Bookings List Section */}
+      <section className="bookings-list-section">
+        <h3>Current Bookings</h3>
+
+        <div className="bookings-actions">
+          <button onClick={() => handleExportBookings('csv')}>Export CSV</button>
+          <button onClick={() => handleExportBookings('json')}>Export JSON</button>
+          <input
+            type="file"
+            accept=".csv,.json"
+            onChange={e => handleImportBookings(e.target.files[0])}
+          />
+          <button onClick={handleBulkDelete} disabled={selectedItems.length === 0}>Delete Selected</button>
+          <button onClick={fetchBookings}>Refresh</button>
+        </div>
+
+        <DataTable
+          data={filteredBookings}
+          type="bookings"
+          onEdit={handleEdit}
+          onDelete={(id) => {
+            const token = localStorage.getItem('token');
+            axios.delete(`${url}/admin/dashboard/bookings/${id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).then(() => fetchBookings());
+          }}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onSelectAll={handleSelectAll}
+        />
+      </section>
     </div>
   );
 };

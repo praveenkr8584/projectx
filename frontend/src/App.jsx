@@ -10,7 +10,9 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/common/Navbar';
 import AddRoomForm from './components/admin/AddRoomForm';
 import AddServiceForm from './components/admin/AddServiceForm';
+import Services from './components/admin/Services';
 import Bookings from './components/admin/Bookings';
+import Rooms from './components/admin/Rooms';
 import Users from './components/admin/Users';
 import UserDashboard from './components/user/UserDashboard';
 import UserProfile from './components/user/UserProfile';
@@ -60,7 +62,9 @@ function App() {
           <Route path="/admin/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/rooms" element={<ProtectedRoute><Rooms /></ProtectedRoute>} />
           <Route path="/admin/add-room" element={<ProtectedRoute><AddRoomForm /></ProtectedRoute>} />
+          <Route path="/admin/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
           <Route path="/admin/add-service" element={<ProtectedRoute><AddServiceForm /></ProtectedRoute>} />
           <Route path="/user/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
