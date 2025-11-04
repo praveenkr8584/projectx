@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 
 const RoomList = () => {
-  const url='https://projectx-backend-q4wb.onrender.com';
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +24,7 @@ const RoomList = () => {
         if (filters[key]) queryParams.append(key, filters[key]);
       });
 
-      const response = await axios.get(`${url}/rooms?${queryParams}`);
+      const response = await api.get(`/rooms?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       setError('Failed to load rooms');
@@ -58,9 +57,10 @@ const RoomList = () => {
             <label>Room Type:</label>
             <select name="type" value={filters.type} onChange={handleFilterChange}>
               <option value="">All Types</option>
-              <option value="single">Single</option>
-              <option value="double">Double</option>
-              <option value="suite">Suite</option>
+              <option value="Single">Single</option>
+              <option value="Double">Double</option>
+              <option value="Deluxe">Deluxe</option>
+              <option value="Suite">Suite</option>
             </select>
           </div>
           <div className="filter-group">

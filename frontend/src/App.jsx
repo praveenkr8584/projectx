@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import BookingForm from './components/booking/BookingForm';
+import BookingForm from './components/common/BookingForm';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Profile from './components/admin/AdminProfile';
 import Home from './components/home/Home';

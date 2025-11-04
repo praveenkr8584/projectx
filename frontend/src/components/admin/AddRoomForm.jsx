@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 
 const AddRoomForm = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [formData, setFormData] = useState({
     roomNumber: '',
     type: '',
@@ -43,10 +42,7 @@ const AddRoomForm = () => {
         }
       });
       images.forEach(image => data.append('images', image));
-      const token = localStorage.getItem('token');
-      await axios.post(`${url}/admin/dashboard/rooms`, data, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.post(`/admin/dashboard/rooms`, data);
       setMessage('Room added successfully!');
       setFormData({
         roomNumber: '',

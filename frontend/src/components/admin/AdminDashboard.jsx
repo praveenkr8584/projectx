@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -24,7 +24,6 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [stats, setStats] = useState({});
   const [chartData, setChartData] = useState({});
   const [reports, setReports] = useState({
@@ -42,9 +41,7 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const statsRes = await axios.get(`${url}/admin/stats`, { headers });
+      const statsRes = await api.get(`/admin/stats`);
       setStats(statsRes.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -53,9 +50,7 @@ const AdminDashboard = () => {
 
   const fetchChartData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const chartRes = await axios.get(`${url}/admin/chart-data`, { headers });
+      const chartRes = await api.get(`/admin/chart-data`);
       setChartData(chartRes.data);
     } catch (error) {
       console.error('Error fetching chart data:', error);
@@ -64,14 +59,11 @@ const AdminDashboard = () => {
 
   const fetchReports = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [monthlyRes, yearlyRes, occupancyRes, auditRes] = await Promise.all([
-        axios.get(`${url}/admin/reports/revenue/monthly`, { headers }),
-        axios.get(`${url}/admin/reports/revenue/yearly`, { headers }),
-        axios.get(`${url}/admin/reports/occupancy`, { headers }),
-        axios.get(`${url}/admin/audit-logs`, { headers })
+        api.get(`/admin/reports/revenue/monthly`),
+        api.get(`/admin/reports/revenue/yearly`),
+        api.get(`/admin/reports/occupancy`),
+        api.get(`/admin/audit-logs`)
       ]);
 
       setReports({

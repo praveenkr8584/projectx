@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 import './UserServices.css';
 
 const UserServices = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +24,7 @@ const UserServices = () => {
         if (filters[key]) queryParams.append(key, filters[key]);
       });
 
-      const response = await axios.get(`${url}/services?${queryParams}`);
+      const response = await api.get(`/services?${queryParams}`);
       setServices(response.data);
     } catch (error) {
       setError('Failed to load services');

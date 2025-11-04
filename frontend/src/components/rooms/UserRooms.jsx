@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 import './UserRooms.css';
 
 const UserRooms = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,7 +26,7 @@ const UserRooms = () => {
         if (filters[key]) queryParams.append(key, filters[key]);
       });
 
-      const response = await axios.get(`${url}/rooms?${queryParams}`);
+      const response = await api.get(`/rooms?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       setError('Failed to load rooms');
@@ -67,10 +66,10 @@ const UserRooms = () => {
             <div className="filter-group">
               <select name="type" value={filters.type} onChange={handleFilterChange}>
                 <option value="">All Types</option>
-                <option value="single">Single</option>
-                <option value="double">Double</option>
-                <option value="suite">Suite</option>
-                <option value="suite">Deluxe</option>
+                <option value="Single">Single</option>
+                <option value="Double">Double</option>
+                <option value="Deluxe">Deluxe</option>
+                <option value="Suite">Suite</option>
               </select>
             </div>
             <div className="filter-group">
@@ -133,7 +132,7 @@ const UserRooms = () => {
                     <p>Status: {room.status}</p>
                   )
                 ) : (
-                  <button className="btn" onClick={() => handleBookRoom(room.roomNumber)}>Book Room</button>
+                  <button className="btn" onClick={() => handleBookRoom(room.roomNumber)}>Login to Book</button>
                 )}
               </div>
             ))

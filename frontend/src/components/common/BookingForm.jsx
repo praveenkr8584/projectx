@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api';
 
-const BookingForm = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
+const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) => {
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [formData, setFormData] = useState({
@@ -13,20 +12,33 @@ const BookingForm = () => {
     checkInDate: '',
     checkOutDate: ''
   });
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const roomNumber = urlParams.get('roomNumber');
     if (roomNumber) {
-      setFormData(prev => ({ ...prev, roomNumber }));
+      // Fetch the specific room details to pre-fill roomType and roomNumber
+      const fetchRoomDetails = async () => {
+        try {
+          const response = await api.get('/rooms');
+          const room = response.data.find(r => r.roomNumber === roomNumber);
+          if (room) {
+            setFormData(prev => ({ ...prev, roomType: room.type, roomNumber: room.roomNumber }));
+            setFilteredRooms([room]); // Set filteredRooms to include only this room
+          }
+        } catch (error) {
+          console.error('Error fetching room details:', error);
+        }
+      };
+      fetchRoomDetails();
     }
   }, []);
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await axios.get(`${url}/rooms`);
+        const response = await api.get('/rooms');
         setRooms(response.data);
       } catch (error) {
         console.error('Error fetching rooms:', error);
@@ -42,13 +54,17 @@ const BookingForm = () => {
   }, [formData.checkInDate, formData.checkOutDate]);
 
   useEffect(() => {
-    if (formData.roomType) {
-      const filtered = rooms.filter(room => room.type === formData.roomType && room.status === 'Available');
+    if (formData.roomType && !formData.roomNumber) {
+      const filtered = rooms.filter(room => room.type.toLowerCase() === formData.roomType.toLowerCase() && room.status === 'available');
       setFilteredRooms(filtered);
+    } else if (formData.roomNumber) {
+      // If roomNumber is pre-filled, keep only that room in filteredRooms
+      const room = rooms.find(r => r.roomNumber === formData.roomNumber);
+      setFilteredRooms(room ? [room] : []);
     } else {
       setFilteredRooms([]);
     }
-  }, [formData.roomType, rooms]);
+  }, [formData.roomType, formData.roomNumber, rooms]);
 
   const fetchAvailableRooms = async () => {
     try {
@@ -56,7 +72,7 @@ const BookingForm = () => {
         checkInDate: formData.checkInDate,
         checkOutDate: formData.checkOutDate
       });
-      const response = await axios.get(`${url}/rooms/available?${queryParams}`);
+      const response = await api.get(`/rooms?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
@@ -70,13 +86,15 @@ const BookingForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${url}/booking`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage('Booking successful!');
+      const response = await api.post('/booking', formData);
+      const successMessage = 'Booking successful!';
+      setMessage(successMessage);
+      if (onMessageChange) onMessageChange(successMessage);
+      if (onSubmitSuccess) onSubmitSuccess();
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Booking failed');
+      const errorMessage = error.response?.data?.error || 'Booking failed';
+      setMessage(errorMessage);
+      if (onMessageChange) onMessageChange(errorMessage);
     }
   };
   return (
@@ -100,9 +118,9 @@ const BookingForm = () => {
         />
         <select name="roomType" value={formData.roomType} onChange={handleChange} required>
           <option value="">Select Room Type</option>
-          <option value="Single Room">Single Room</option>
-          <option value="Double Room">Double Room</option>
-          <option value="Deluxe Room">Deluxe Room</option>
+          <option value="Single">Single</option>
+          <option value="Double">Double</option>
+          <option value="Deluxe">Deluxe</option>
           <option value="Suite">Suite</option>
         </select>
         <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
@@ -133,7 +151,7 @@ const BookingForm = () => {
 
       {filteredRooms.length > 0 && (
         <div className="room-options">
-          <h3>Available {formData.roomType}s</h3>
+          <h3>Available {formData.roomType || 'Rooms'}</h3>
           <div className="rooms-grid">
             {filteredRooms.map(room => (
               <div key={room._id} className="room-card">

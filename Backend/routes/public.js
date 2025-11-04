@@ -10,15 +10,26 @@ const router = express.Router();
 // Create Booking (public)
 router.post('/booking', authenticateToken, async (req, res) => {
     try {
-        const { roomNumber } = req.body;
+        const { roomNumber, checkInDate, checkOutDate } = req.body;
 
-        const room = await Room.findOne({ roomNumber, status: 'available' });
-        if (!room) return res.status(400).json({ error: 'Room not available' });
+        const room = await Room.findOne({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] });
+        if (!room || room.status.toLowerCase() !== 'available') return res.status(400).json({ error: 'Room not available' });
+
+        // Check for conflicting bookings
+        const conflictingBooking = await Booking.findOne({
+            roomNumber: roomNumber.toString().trim(),
+            $or: [
+                { checkInDate: { $lt: new Date(checkOutDate), $gte: new Date(checkInDate) } },
+                { checkOutDate: { $gt: new Date(checkInDate), $lte: new Date(checkOutDate) } },
+                { checkInDate: { $lte: new Date(checkInDate) }, checkOutDate: { $gte: new Date(checkOutDate) } }
+            ]
+        });
+        if (conflictingBooking) return res.status(400).json({ error: 'Room not available for selected dates' });
 
         let newBooking = new Booking({ ...req.body, status: 'booked' });
         await newBooking.save();
 
-        await Room.findOneAndUpdate({ roomNumber }, { status: 'occupied' });
+        await Room.findOneAndUpdate({ roomNumber: roomNumber.toString().trim() }, { status: 'occupied' });
 
         const subject = 'Booking Confirmation';
         const text = `Dear ${newBooking.customerName},\n\nYour booking has been confirmed.\n\nDetails:\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate}\nCheck-out: ${newBooking.checkOutDate}\nTotal Amount: $${newBooking.totalAmount}\n\nThank you for choosing our hotel!`;
@@ -61,13 +72,13 @@ router.post('/services', authenticateToken, async (req, res) => {
 router.get('/rooms', async (req, res) => {
     try {
         const { type, minPrice, maxPrice, checkInDate, checkOutDate } = req.query;
-        let query = {};
+        let query = { status: 'available' }; // Only show available rooms
 
         if (type) query.type = type;
         if (minPrice) query.price = { ...query.price, $gte: parseFloat(minPrice) };
         if (maxPrice) query.price = { ...query.price, $lte: parseFloat(maxPrice) };
 
-        // For date filters, check availability (not booked or maintenance during the period)
+        // For date filters, check availability (not booked during the period)
         if (checkInDate && checkOutDate) {
             // Find rooms that are not booked during the specified dates
             const conflictingBookings = await Booking.find({
@@ -77,7 +88,6 @@ router.get('/rooms', async (req, res) => {
 
             const bookedRoomNumbers = conflictingBookings.map(b => b.roomNumber);
             query.roomNumber = { $nin: bookedRoomNumbers };
-            query.status = { $ne: 'maintenance' }; // Exclude maintenance rooms
         }
 
         const rooms = await Room.find(query);

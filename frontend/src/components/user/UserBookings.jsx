@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 
 const UserBookings = () => {
-  const url='https://projectx-backend-q4wb.onrender.com';
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -13,10 +12,7 @@ const UserBookings = () => {
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${url}/user/bookings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(`/user/bookings`);
       setBookings(response.data);
     } catch (error) {
       setError('Failed to load bookings');
@@ -29,10 +25,7 @@ const UserBookings = () => {
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${url}/user/bookings/${bookingId}/cancel`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/user/bookings/${bookingId}/cancel`);
       fetchBookings(); // Refresh bookings list
       alert('Booking cancelled successfully!');
     } catch (error) {

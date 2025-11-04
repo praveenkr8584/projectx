@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 
 const EditForm = ({ item, type, onSave, onCancel }) => {
-  const url='https://projectx-backend-q4wb.onrender.com';
   const [formData, setFormData] = useState(item || {});
 
   useEffect(() => {
@@ -16,10 +15,7 @@ const EditForm = ({ item, type, onSave, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${url}/admin/dashboard/${type}/${formData._id}`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/admin/dashboard/${type}/${formData._id}`, formData);
       onSave();
     } catch (error) {
       console.error('Error updating:', error);

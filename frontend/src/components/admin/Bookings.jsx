@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api.js';
 import DataTable from '../common/DataTable';
 import FilterPanel from '../common/FilterPanel';
 import EditForm from './EditForm';
+import BookingForm from '../common/BookingForm';
 import './Bookings.css';
 
 const Bookings = () => {
-  const url = 'https://projectx-backend-q4wb.onrender.com';
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [formData, setFormData] = useState({
@@ -40,7 +40,7 @@ const Bookings = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await axios.get(`${url}/rooms`);
+      const response = await api.get(`/rooms`);
         setRooms(response.data);
       } catch (error) {
         console.error('Error fetching rooms:', error);
@@ -52,9 +52,7 @@ const Bookings = () => {
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get(`${url}/admin/dashboard`, { headers });
+      const response = await api.get(`/admin/dashboard`);
       setBookings(response.data.bookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -69,7 +67,7 @@ const Bookings = () => {
 
   useEffect(() => {
     if (formData.roomType) {
-      const filtered = rooms.filter(room => room.type === formData.roomType && room.status === 'Available');
+      const filtered = rooms.filter(room => room.type.toLowerCase() === formData.roomType.toLowerCase() && room.status === 'available');
       setFilteredRooms(filtered);
     } else {
       setFilteredRooms([]);
@@ -82,7 +80,7 @@ const Bookings = () => {
         checkInDate: formData.checkInDate,
         checkOutDate: formData.checkOutDate
       });
-      const response = await axios.get(`${url}/rooms/available?${queryParams}`);
+      const response = await api.get(`/rooms?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
@@ -96,10 +94,7 @@ const Bookings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${url}/booking`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.post(`/booking`, formData);
       setMessage('Booking successful!');
       fetchBookings();
       setFormData({
@@ -144,9 +139,7 @@ const Bookings = () => {
   const handleBulkDelete = async () => {
     if (selectedItems.length === 0) return;
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      await Promise.all(selectedItems.map(id => axios.delete(`${url}/admin/dashboard/bookings/${id}`, { headers })));
+      await Promise.all(selectedItems.map(id => api.delete(`/admin/dashboard/bookings/${id}`)));
       setSelectedItems([]);
       fetchBookings();
     } catch (error) {
@@ -184,9 +177,7 @@ const Bookings = () => {
     const formDataImport = new FormData();
     formDataImport.append('file', file);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${url}/admin/dashboard/bookings/import`, formDataImport, { headers });
+      await api.post(`/admin/dashboard/bookings/import`, formDataImport);
       fetchBookings();
       alert('Import successful');
     } catch (error) {
@@ -259,73 +250,24 @@ const Bookings = () => {
             {/* Booking Form */}
             <div className="bookings-form-section">
               <h4>Manual Booking</h4>
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  name="customerName"
-                  placeholder="Customer Name"
-                  value={formData.customerName}
-                  onChange={handleChange}
-                  required
-                />
-                <input
-                  type="email"
-                  name="customerEmail"
-                  placeholder="Customer Email"
-                  value={formData.customerEmail}
-                  onChange={handleChange}
-                  required
-                />
-                <select name="roomType" value={formData.roomType} onChange={handleChange} required>
-                  <option value="">Select Room Type</option>
-                  <option value="Single Room">Single Room</option>
-                  <option value="Double Room">Double Room</option>
-                  <option value="Deluxe Room">Deluxe Room</option>
-                  <option value="Suite">Suite</option>
-                </select>
-                <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
-                  <option value="">Select Room</option>
-                  {filteredRooms.map(room => (
-                    <option key={room._id} value={room.roomNumber}>
-                      {room.roomNumber} - ${room.price}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="date"
-                  name="checkInDate"
-                  value={formData.checkInDate}
-                  onChange={handleChange}
-                  required
-                />
-                <input
-                  type="date"
-                  name="checkOutDate"
-                  value={formData.checkOutDate}
-                  onChange={handleChange}
-                  required
-                />
-                <button type="submit">Book Room</button>
-              </form>
+              <BookingForm
+                onSubmitSuccess={() => {
+                  fetchBookings();
+                  setFormData({
+                    customerName: '',
+                    customerEmail: '',
+                    roomType: '',
+                    roomNumber: '',
+                    checkInDate: '',
+                    checkOutDate: ''
+                  });
+                }}
+                onMessageChange={setMessage}
+                initialMessage={message}
+              />
               {message && (
                 <div className={`bookings-message ${message.includes('successful') ? 'success' : 'error'}`}>
                   {message}
-                </div>
-              )}
-
-              {filteredRooms.length > 0 && (
-                <div className="room-options">
-                  <h3>Available {formData.roomType}s</h3>
-                  <div className="rooms-grid">
-                    {filteredRooms.map(room => (
-                      <div key={room._id} className="room-card">
-                        <h4>Room {room.roomNumber}</h4>
-                        <p><strong>Price:</strong> ${room.price} per night</p>
-                        <p><strong>Features:</strong> {room.features.join(', ')}</p>
-                        <p><strong>Status:</strong> {room.status}</p>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -355,9 +297,7 @@ const Bookings = () => {
           onEdit={handleEdit}
           onDelete={(id) => {
             const token = localStorage.getItem('token');
-            axios.delete(`${url}/admin/dashboard/bookings/${id}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            }).then(() => fetchBookings());
+            api.delete(`/admin/dashboard/bookings/${id}`).then(() => fetchBookings());
           }}
           selectedItems={selectedItems}
           onSelectItem={handleSelectItem}
