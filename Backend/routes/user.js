@@ -169,7 +169,7 @@ router.post('/bookings', authenticateToken, authorizeCustomer, async (req, res) 
 
         const subject = 'Booking Confirmation';
         const text = `Dear ${user.fullname},\n\nYour booking has been confirmed.\n\nDetails:\nRoom: ${roomNumber}\nCheck-in: ${checkInDate}\nCheck-out: ${checkOutDate}\nTotal Amount: $${totalAmount}\n\nThank you for choosing our hotel!`;
-        const html = `<p>Dear ${user.fullname},</p><p>Your booking has been confirmed.</p><p><strong>Details:</strong></p><ul><li>Room: ${roomNumber}</li><li>Check-in: ${checkInDate}</li><li>Check-out: ${checkOutDate}</li><li>Total Amount: $${totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
+        const html = `<p>Dear ${user.fullname},</p><p>Your booking has been confirmed.</p><p><strong>Details:</strong></p><ul><li>Room: ${roomNumber}</li><li>Check-in: ${roomNumber}</li><li>Check-out: ${roomNumber}</li><li>Total Amount: $${totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
         await sendEmail(user.email, subject, text, html);
 
         res.json({ message: 'Booking created successfully', booking: newBooking });
@@ -201,6 +201,16 @@ router.put('/bookings/:id/cancel', authenticateToken, authorizeCustomer, async (
         await sendEmail(user.email, subject, text, html);
 
         res.json({ message: 'Booking cancelled successfully', booking });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Get All Rooms for User
+router.get('/rooms', authenticateToken, authorizeCustomer, async (req, res) => {
+    try {
+        const rooms = await Room.find({}).sort({ roomNumber: 1 });
+        res.json(rooms);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
     }

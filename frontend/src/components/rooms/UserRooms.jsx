@@ -26,7 +26,8 @@ const UserRooms = () => {
         if (filters[key]) queryParams.append(key, filters[key]);
       });
 
-      const response = await api.get(`/rooms?${queryParams}`);
+      const endpoint = isLoggedIn ? '/user/rooms' : '/rooms/available';
+      const response = await api.get(`${endpoint}?${queryParams}`);
       setRooms(response.data);
     } catch (error) {
       setError('Failed to load rooms');
