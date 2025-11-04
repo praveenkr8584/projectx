@@ -88,7 +88,7 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
 
     // Calculate total amount when roomNumber or dates change
     if (name === 'roomNumber' || name === 'checkInDate' || name === 'checkOutDate') {
-      const room = rooms.find(r => r.roomNumber == value) || filteredRooms.find(r => r.roomNumber == value);
+      const room = rooms.find(r => String(r.roomNumber) === String(value)) || filteredRooms.find(r => String(r.roomNumber) === String(value));
       if (room && formData.checkInDate && formData.checkOutDate) {
         const checkIn = new Date(formData.checkInDate);
         const checkOut = new Date(formData.checkOutDate);
