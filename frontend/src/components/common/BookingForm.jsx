@@ -104,7 +104,7 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
     setIsLoading(true);
 
     try {
-      const response = await api.post('/user/booking', formData);
+      const response = await api.post('/user/bookings', formData);
       const successMessage = `Booking successful! Reference: ${response.data.booking.bookingReference}`;
       setMessage(successMessage);
       if (onMessageChange) onMessageChange(successMessage);
