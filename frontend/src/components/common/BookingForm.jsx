@@ -10,7 +10,8 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
     roomType: '',
     roomNumber: '',
     checkInDate: '',
-    checkOutDate: ''
+    checkOutDate: '',
+    totalAmount: 0
   });
   const [message, setMessage] = useState(initialMessage);
 
@@ -80,7 +81,20 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Calculate total amount when roomNumber or dates change
+    if (name === 'roomNumber' || name === 'checkInDate' || name === 'checkOutDate') {
+      const room = rooms.find(r => r.roomNumber == value) || filteredRooms.find(r => r.roomNumber == value);
+      if (room && formData.checkInDate && formData.checkOutDate) {
+        const checkIn = new Date(formData.checkInDate);
+        const checkOut = new Date(formData.checkOutDate);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        const total = nights * room.price;
+        setFormData(prev => ({ ...prev, totalAmount: total }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {

@@ -10,7 +10,7 @@ const router = express.Router();
 // Create Booking (public)
 router.post('/booking', authenticateToken, async (req, res) => {
     try {
-        const { roomNumber, checkInDate, checkOutDate } = req.body;
+        const { roomNumber, checkInDate, checkOutDate, totalAmount } = req.body;
 
         const room = await Room.findOne({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] });
         if (!room || room.status.toLowerCase() !== 'available') return res.status(400).json({ error: 'Room not available' });
@@ -26,10 +26,14 @@ router.post('/booking', authenticateToken, async (req, res) => {
         });
         if (conflictingBooking) return res.status(400).json({ error: 'Room not available for selected dates' });
 
-        let newBooking = new Booking({ ...req.body, status: 'booked' });
+        let newBooking = new Booking({
+            ...req.body,
+            roomNumber: roomNumber.toString().trim(),
+            status: 'confirmed'
+        });
         await newBooking.save();
 
-        await Room.findOneAndUpdate({ roomNumber: roomNumber.toString().trim() }, { status: 'occupied' });
+        await Room.findOneAndUpdate({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] }, { status: 'occupied' });
 
         const subject = 'Booking Confirmation';
         const text = `Dear ${newBooking.customerName},\n\nYour booking has been confirmed.\n\nDetails:\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate}\nCheck-out: ${newBooking.checkOutDate}\nTotal Amount: $${newBooking.totalAmount}\n\nThank you for choosing our hotel!`;

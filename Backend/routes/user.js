@@ -150,13 +150,24 @@ router.post('/bookings', authenticateToken, authorizeCustomer, async (req, res) 
 
         const { roomNumber, checkInDate, checkOutDate, totalAmount } = req.body;
 
-        const room = await Room.findOne({ roomNumber, status: 'available' });
+        const room = await Room.findOne({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }], status: 'available' });
         if (!room) return res.status(400).json({ error: 'Room not available' });
+
+        // Check for conflicting bookings
+        const conflictingBooking = await Booking.findOne({
+            roomNumber: roomNumber.toString().trim(),
+            $or: [
+                { checkInDate: { $lt: new Date(checkOutDate), $gte: new Date(checkInDate) } },
+                { checkOutDate: { $gt: new Date(checkInDate), $lte: new Date(checkOutDate) } },
+                { checkInDate: { $lte: new Date(checkInDate) }, checkOutDate: { $gte: new Date(checkOutDate) } }
+            ]
+        });
+        if (conflictingBooking) return res.status(400).json({ error: 'Room not available for selected dates' });
 
         const newBooking = new Booking({
             customerName: user.fullname,
             customerEmail: user.email,
-            roomNumber,
+            roomNumber: roomNumber.toString().trim(),
             checkInDate,
             checkOutDate,
             status: 'confirmed',
@@ -165,11 +176,11 @@ router.post('/bookings', authenticateToken, authorizeCustomer, async (req, res) 
 
         await newBooking.save();
 
-        await Room.findOneAndUpdate({ roomNumber }, { status: 'occupied' });
+        await Room.findOneAndUpdate({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] }, { status: 'occupied' });
 
         const subject = 'Booking Confirmation';
         const text = `Dear ${user.fullname},\n\nYour booking has been confirmed.\n\nDetails:\nRoom: ${roomNumber}\nCheck-in: ${checkInDate}\nCheck-out: ${checkOutDate}\nTotal Amount: $${totalAmount}\n\nThank you for choosing our hotel!`;
-        const html = `<p>Dear ${user.fullname},</p><p>Your booking has been confirmed.</p><p><strong>Details:</strong></p><ul><li>Room: ${roomNumber}</li><li>Check-in: ${roomNumber}</li><li>Check-out: ${roomNumber}</li><li>Total Amount: $${totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
+        const html = `<p>Dear ${user.fullname},</p><p>Your booking has been confirmed.</p><p><strong>Details:</strong></p><ul><li>Room: ${roomNumber}</li><li>Check-in: ${checkInDate}</li><li>Check-out: ${checkOutDate}</li><li>Total Amount: $${totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
         await sendEmail(user.email, subject, text, html);
 
         res.json({ message: 'Booking created successfully', booking: newBooking });
