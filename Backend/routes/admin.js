@@ -13,7 +13,7 @@ const router = express.Router();
 // Admin Dashboard
 router.get('/dashboard', authenticateToken, authorizeAdmin, async (req, res) => {
     try {
-        let bookings = await Booking.find();
+        let bookings = await Booking.find().sort({ createdAt: -1 });
         let users = await User.find();
         let services = await Service.find();
         let rooms = await Room.find();

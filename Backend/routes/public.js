@@ -7,46 +7,107 @@ const { sendEmail, sendAdminAlert } = require('../utils/email');
 
 const router = express.Router();
 
-// Create Booking (public)
-router.post('/booking', authenticateToken, async (req, res) => {
+// Create Booking (public - for non-authenticated users)
+router.post('/booking', async (req, res) => {
     try {
-        const { roomNumber, checkInDate, checkOutDate, totalAmount } = req.body;
+        const { customerName, customerEmail, roomNumber, checkInDate, checkOutDate, totalAmount, notes } = req.body;
 
-        const room = await Room.findOne({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] });
-        if (!room || room.status.toLowerCase() !== 'available') return res.status(400).json({ error: 'Room not available' });
+        // Validate required fields
+        if (!customerName || !customerEmail || !roomNumber || !checkInDate || !checkOutDate || !totalAmount) {
+            return res.status(400).json({ error: 'All required fields must be provided' });
+        }
+
+        // Validate dates
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        if (checkIn >= checkOut) {
+            return res.status(400).json({ error: 'Check-out date must be after check-in date' });
+        }
+        if (checkIn < new Date()) {
+            return res.status(400).json({ error: 'Check-in date cannot be in the past' });
+        }
+
+        // Find and validate room
+        const room = await Room.findOne({ roomNumber: roomNumber.toString().trim() });
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found' });
+        }
+        if (room.status.toLowerCase() !== 'available') {
+            return res.status(400).json({ error: 'Room is not available' });
+        }
+
+        // Calculate expected total amount
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        const expectedTotal = nights * room.price;
+        if (Math.abs(totalAmount - expectedTotal) > 0.01) {
+            return res.status(400).json({ error: 'Total amount calculation mismatch' });
+        }
 
         // Check for conflicting bookings
         const conflictingBooking = await Booking.findOne({
             roomNumber: roomNumber.toString().trim(),
+            status: { $in: ['confirmed', 'checked-in'] },
             $or: [
-                { checkInDate: { $lt: new Date(checkOutDate), $gte: new Date(checkInDate) } },
-                { checkOutDate: { $gt: new Date(checkInDate), $lte: new Date(checkOutDate) } },
-                { checkInDate: { $lte: new Date(checkInDate) }, checkOutDate: { $gte: new Date(checkOutDate) } }
+                { checkInDate: { $lt: checkOut, $gte: checkIn } },
+                { checkOutDate: { $gt: checkIn, $lte: checkOut } },
+                { checkInDate: { $lte: checkIn }, checkOutDate: { $gte: checkOut } }
             ]
         });
-        if (conflictingBooking) return res.status(400).json({ error: 'Room not available for selected dates' });
 
-        let newBooking = new Booking({
-            ...req.body,
+        if (conflictingBooking) {
+            return res.status(400).json({ error: 'Room is not available for the selected dates' });
+        }
+
+        // Create booking
+        const newBooking = new Booking({
+            customerName: customerName.trim(),
+            customerEmail: customerEmail.toLowerCase().trim(),
             roomNumber: roomNumber.toString().trim(),
-            status: 'confirmed'
+            checkInDate: checkIn,
+            checkOutDate: checkOut,
+            totalAmount,
+            notes: notes?.trim(),
+            status: 'confirmed' // Auto-confirm for public bookings
         });
+
         await newBooking.save();
 
-        await Room.findOneAndUpdate({ $or: [{ roomNumber: roomNumber.toString().trim() }, { roomNumber: parseInt(roomNumber) }] }, { status: 'occupied' });
+        // Update room status
+        await Room.findOneAndUpdate(
+            { roomNumber: roomNumber.toString().trim() },
+            { status: 'occupied' }
+        );
 
-        const subject = 'Booking Confirmation';
-        const text = `Dear ${newBooking.customerName},\n\nYour booking has been confirmed.\n\nDetails:\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate}\nCheck-out: ${newBooking.checkOutDate}\nTotal Amount: $${newBooking.totalAmount}\n\nThank you for choosing our hotel!`;
-        const html = `<p>Dear ${newBooking.customerName},</p><p>Your booking has been confirmed.</p><p><strong>Details:</strong></p><ul><li>Room: ${newBooking.roomNumber}</li><li>Check-in: ${newBooking.checkInDate}</li><li>Check-out: ${newBooking.checkOutDate}</li><li>Total Amount: $${newBooking.totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
+        // Send confirmation email
+        const subject = `Booking Confirmation - ${newBooking.bookingReference}`;
+        const text = `Dear ${newBooking.customerName},\n\nYour booking has been confirmed.\n\nBooking Reference: ${newBooking.bookingReference}\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate.toLocaleDateString()}\nCheck-out: ${newBooking.checkOutDate.toLocaleDateString()}\nTotal Amount: $${newBooking.totalAmount}\n\nThank you for choosing our hotel!`;
+        const html = `<p>Dear ${newBooking.customerName},</p><p>Your booking has been confirmed.</p><p><strong>Booking Details:</strong></p><ul><li><strong>Reference:</strong> ${newBooking.bookingReference}</li><li><strong>Room:</strong> ${newBooking.roomNumber}</li><li><strong>Check-in:</strong> ${newBooking.checkInDate.toLocaleDateString()}</li><li><strong>Check-out:</strong> ${newBooking.checkOutDate.toLocaleDateString()}</li><li><strong>Total Amount:</strong> $${newBooking.totalAmount}</li></ul><p>Thank you for choosing our hotel!</p>`;
         await sendEmail(newBooking.customerEmail, subject, text, html);
 
-        const adminSubject = 'New Booking Alert';
-        const adminText = `A new booking has been made.\n\nCustomer: ${newBooking.customerName}\nEmail: ${newBooking.customerEmail}\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate}\nCheck-out: ${newBooking.checkOutDate}\nTotal Amount: $${newBooking.totalAmount}`;
-        const adminHtml = `<p><strong>New Booking Alert</strong></p><p>Customer: ${newBooking.customerName}</p><p>Email: ${newBooking.customerEmail}</p><p>Room: ${newBooking.roomNumber}</p><p>Check-in: ${newBooking.checkInDate}</p><p>Check-out: ${newBooking.checkOutDate}</p><p>Total Amount: $${newBooking.totalAmount}</p>`;
+        // Send admin alert
+        const adminSubject = `New Booking Alert - ${newBooking.bookingReference}`;
+        const adminText = `A new booking has been made.\n\nReference: ${newBooking.bookingReference}\nCustomer: ${newBooking.customerName}\nEmail: ${newBooking.customerEmail}\nRoom: ${newBooking.roomNumber}\nCheck-in: ${newBooking.checkInDate.toLocaleDateString()}\nCheck-out: ${newBooking.checkOutDate.toLocaleDateString()}\nTotal Amount: $${newBooking.totalAmount}`;
+        const adminHtml = `<p><strong>New Booking Alert</strong></p><p><strong>Reference:</strong> ${newBooking.bookingReference}</p><p><strong>Customer:</strong> ${newBooking.customerName}</p><p><strong>Email:</strong> ${newBooking.customerEmail}</p><p><strong>Room:</strong> ${newBooking.roomNumber}</p><p><strong>Check-in:</strong> ${newBooking.checkInDate.toLocaleDateString()}</p><p><strong>Check-out:</strong> ${newBooking.checkOutDate.toLocaleDateString()}</p><p><strong>Total Amount:</strong> $${newBooking.totalAmount}</p>`;
         await sendAdminAlert(adminSubject, adminText, adminHtml);
 
-        res.json({ message: "Booking created", booking: newBooking });
+        res.json({
+            message: "Booking created successfully",
+            booking: {
+                bookingReference: newBooking.bookingReference,
+                customerName: newBooking.customerName,
+                customerEmail: newBooking.customerEmail,
+                roomNumber: newBooking.roomNumber,
+                checkInDate: newBooking.checkInDate,
+                checkOutDate: newBooking.checkOutDate,
+                status: newBooking.status,
+                totalAmount: newBooking.totalAmount
+            }
+        });
     } catch (error) {
+        console.error('Booking creation error:', error);
+        if (error.code === 11000) {
+            return res.status(400).json({ error: 'Booking reference already exists. Please try again.' });
+        }
         res.status(500).json({ error: "Internal server error" });
     }
 });

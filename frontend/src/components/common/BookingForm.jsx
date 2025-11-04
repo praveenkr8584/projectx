@@ -11,9 +11,11 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
     roomNumber: '',
     checkInDate: '',
     checkOutDate: '',
-    totalAmount: 0
+    totalAmount: 0,
+    notes: ''
   });
   const [message, setMessage] = useState(initialMessage);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -99,69 +101,131 @@ const BookingForm = ({ onSubmitSuccess, initialMessage = '', onMessageChange }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
       const response = await api.post('/booking', formData);
-      const successMessage = 'Booking successful!';
+      const successMessage = `Booking successful! Reference: ${response.data.booking.bookingReference}`;
       setMessage(successMessage);
       if (onMessageChange) onMessageChange(successMessage);
       if (onSubmitSuccess) onSubmitSuccess();
+
+      // Reset form after successful booking
+      setFormData({
+        customerName: '',
+        customerEmail: '',
+        roomType: '',
+        roomNumber: '',
+        checkInDate: '',
+        checkOutDate: '',
+        totalAmount: 0,
+        notes: ''
+      });
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Booking failed';
       setMessage(errorMessage);
       if (onMessageChange) onMessageChange(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const getMinCheckInDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const getMinCheckOutDate = () => {
+    if (!formData.checkInDate) return getMinCheckInDate();
+    const checkIn = new Date(formData.checkInDate);
+    checkIn.setDate(checkIn.getDate() + 1);
+    return checkIn.toISOString().split('T')[0];
+  };
+
   return (
     <div className="booking-form">
+      <h2>Book Your Room</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="customerName"
-          placeholder="Customer Name"
-          value={formData.customerName}
+        <div className="form-row">
+          <input
+            type="text"
+            name="customerName"
+            placeholder="Customer Name"
+            value={formData.customerName}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="email"
+            name="customerEmail"
+            placeholder="Customer Email"
+            value={formData.customerEmail}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="form-row">
+          <select name="roomType" value={formData.roomType} onChange={handleChange} required>
+            <option value="">Select Room Type</option>
+            <option value="Single">Single</option>
+            <option value="Double">Double</option>
+            <option value="Deluxe">Deluxe</option>
+            <option value="Suite">Suite</option>
+          </select>
+          <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
+            <option value="">Select Room</option>
+            {filteredRooms.map(room => (
+              <option key={room._id} value={room.roomNumber}>
+                {room.roomNumber} - ${room.price}/night
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-row">
+          <input
+            type="date"
+            name="checkInDate"
+            value={formData.checkInDate}
+            onChange={handleChange}
+            min={getMinCheckInDate()}
+            required
+          />
+          <input
+            type="date"
+            name="checkOutDate"
+            value={formData.checkOutDate}
+            onChange={handleChange}
+            min={getMinCheckOutDate()}
+            required
+          />
+        </div>
+
+        <textarea
+          name="notes"
+          placeholder="Special requests or notes (optional)"
+          value={formData.notes}
           onChange={handleChange}
-          required
+          rows="3"
         />
-        <input
-          type="email"
-          name="customerEmail"
-          placeholder="Customer Email"
-          value={formData.customerEmail}
-          onChange={handleChange}
-          required
-        />
-        <select name="roomType" value={formData.roomType} onChange={handleChange} required>
-          <option value="">Select Room Type</option>
-          <option value="Single">Single</option>
-          <option value="Double">Double</option>
-          <option value="Deluxe">Deluxe</option>
-          <option value="Suite">Suite</option>
-        </select>
-        <select name="roomNumber" value={formData.roomNumber} onChange={handleChange} required>
-          <option value="">Select Room</option>
-          {filteredRooms.map(room => (
-            <option key={room._id} value={room.roomNumber}>
-              {room.roomNumber} - ${room.price}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          name="checkInDate"
-          value={formData.checkInDate}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="date"
-          name="checkOutDate"
-          value={formData.checkOutDate}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Book Room</button>
+
+        {formData.totalAmount > 0 && (
+          <div className="total-amount">
+            <strong>Total Amount: ${formData.totalAmount}</strong>
+          </div>
+        )}
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Processing...' : 'Book Room'}
+        </button>
       </form>
-      {message && <p>{message}</p>}
+
+      {message && (
+        <div className={`message ${message.includes('successful') ? 'success' : 'error'}`}>
+          {message}
+        </div>
+      )}
 
       {filteredRooms.length > 0 && (
         <div className="room-options">
