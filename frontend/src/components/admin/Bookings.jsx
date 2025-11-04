@@ -94,7 +94,7 @@ const Bookings = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post(`/booking`, formData);
+      const response = await api.post(`/user/booking`, formData);
       setMessage('Booking successful!');
       fetchBookings();
       setFormData({
