@@ -166,12 +166,7 @@ router.post('/bookings', authenticateToken, authorizeCustomer, async (req, res) 
         }
 
         // Find and validate room
-        const room = await Room.findOne({
-            $or: [
-                { roomNumber: roomNumber.toString().trim() },
-                { roomNumber: parseInt(roomNumber) }
-            ]
-        });
+        const room = await Room.findOne({roomNumber});
         if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
