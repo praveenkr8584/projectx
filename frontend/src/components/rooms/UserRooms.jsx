@@ -70,6 +70,7 @@ const UserRooms = () => {
                 <option value="single">Single</option>
                 <option value="double">Double</option>
                 <option value="suite">Suite</option>
+                <option value="suite">Deluxe</option>
               </select>
             </div>
             <div className="filter-group">
